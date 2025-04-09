@@ -43,7 +43,7 @@ async def song_request_handler(song_name, username, room_id):
           - 若当前播放的是点歌歌曲，则将新请求加入待播队列。
     """
     global current_is_point_requested
-    print(f"[{room_id}]{timestamp()}[处理点歌] 用户 {username} 请求点歌：{song_name}")
+    # print(f"[{room_id}]{timestamp()}[处理点歌] 用户 {username} 请求点歌：{song_name}") debug print
     track = await spotify_ctrl.search_song(song_name)
     if track:
         current = await asyncio.to_thread(spotify_ctrl.sp.current_playback)
@@ -64,10 +64,11 @@ async def song_request_handler(song_name, username, room_id):
                 current_is_point_requested = True
                 await spotify_ctrl.play_song(track)
         songs = await song_queue.list_songs()
-        print(f"[队列] 当前待播队列：{len(songs)} 首")
+        print(f"[队列] 当前待播队列：{len(songs)} 首------------------")
         for index, song in enumerate(songs, start=1):
             song_info = f"{song['name']} - {song['artists'][0]['name']}"
             print(f"[队列] {index}: {song_info}")
+        print(f"[队列] ------------------------------------")
     else:
         print(f"[{room_id}]{timestamp()}[提示] 没有找到歌曲：{song_name}")
 
@@ -84,10 +85,11 @@ async def next_request_handler(username, room_id):
         print(f"[{room_id}]{timestamp()}[队列] 播放队列中的下一首：{song_info}")
         await spotify_ctrl.play_song(next_track)
         songs = await song_queue.list_songs()
-        print(f"[队列] 当前待播队列：{len(songs)} 首")
+        print(f"[队列] 当前待播队列：{len(songs)} 首------------------")
         for index, song in enumerate(songs, start=1):
             song_info = f"{song['name']} - {song['artists'][0]['name']}"
             print(f"[队列] {index}: {song_info}")
+        print(f"[队列] ------------------------------------")
     else:
         print(f"[{room_id}]{timestamp()}[队列] 队列为空，恢复默认歌单。")
         current_is_point_requested = False
@@ -125,7 +127,7 @@ async def main():
     #threading.Thread(target=config_web.open_config_browser, daemon=True).start()
 
     #time.sleep(2)  # 等待配置网页启动
-
+    print("当前版本：v1.0.1")
     # 加载配置数据
     config = load_app_config()
     

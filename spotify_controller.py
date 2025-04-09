@@ -1,9 +1,21 @@
 # spotify_controller.py
 import asyncio
 import random
+import difflib
 from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from log_timer import timestamp
+from opencc import OpenCC
+
+def normalize_text(text: str) -> str:
+    """
+    将文本转换为简体，然后统一替换常见异体字。
+    例如：把简体中的“漂”替换为“飘”
+    """
+    t2s_converter = OpenCC('t2s')
+    simplified = t2s_converter.convert(text)
+    normalized = simplified
+    return normalized
 
 class SpotifyController:
     def __init__(self, client_id, client_secret, redirect_uri, scope, default_playlist=None):
@@ -23,18 +35,39 @@ class SpotifyController:
 
     def _search_song(self, song_name):
         try:
-            query = f"track:{song_name}"
-            results = self.sp.search(q=song_name, type='track', limit=5)
+            # 先将用户输入的歌曲名称标准化并转为小写
+            query_normalized = normalize_text(song_name).lower()
+            
+            # 使用 Spotify API 搜索候选结果（limit 可根据需要调整）
+            results = self.sp.search(q=song_name, type='track', limit=2)
             tracks = results.get('tracks', {}).get('items', [])
+            # print(f"[搜索] 返回的候选歌曲列表: {tracks}") debug print
+            
             if tracks:
+                matching_tracks = []
+                # 遍历候选结果，将候选歌曲名称标准化后转为小写
                 for track in tracks:
-                    if song_name.lower() in track['name'].lower():
-                        return track
-                return tracks[0]  # 没有明显匹配 返回第一个匹配的歌曲
-            return None  # 没有找到匹配的歌曲
+                    track_name = track.get('name', '')
+                    track_normalized = normalize_text(track_name).lower()
+                    # 使用 in 判断是否包含查询字符串（忽略大小写）
+                    if query_normalized in track_normalized:
+                        matching_tracks.append(track)
+                        print(f"[搜索] 匹配歌曲: {track['name']} - {track['artists'][0]['name']} (popularity: {track.get('popularity', 'N/A')})")
+                if matching_tracks:
+                    # 返回匹配列表中热度最高的那首
+                    selected = max(matching_tracks, key=lambda t: t.get('popularity', 0))
+                    return selected
+                else:
+                    # 若没有直接匹配，再采用其他策略（例如比较相似度或者返回热度最高的候选）
+                    for track in tracks:
+                        print(f"[搜索] 候选歌曲: {track['name']} - {track['artists'][0]['name']} (popularity: {track.get('popularity', 'N/A')})")
+                    print(f"[搜索] 没有直接匹配，播放热度最高的候选歌曲")
+                    return max(tracks, key=lambda t: t.get('popularity', 0))
+            return None
         except Exception as e:
             print(f"[ERROR] 搜索歌曲出错: {e}")
             return None
+
 
     async def search_song(self, song_name: str):
         # 包装为异步函数调用

@@ -47,10 +47,23 @@ class BilibiliClient:
         try:
             text = event['data']['info'][1]
             user_info = event['data']['info'][2]
+            
+            medal = event['data']['info'][0][15]['user']['medal']
+            if medal is not None:
+                user_guard_level = event['data']['info'][0][15]['user']['medal']['guard_level']
+                user_is_light = event['data']['info'][0][15]['user']['medal']['is_light']
+                user_lgiht_level = event['data']['info'][0][15]['user']['medal']['level']
+            else:
+                user_guard_level = 0
+                user_is_light = 0
+                user_lgiht_level = 0
+
             username = user_info[1]
             userudid = user_info[0]
             user_type = user_info[2] if len(user_info) > 2 else 0
-            medal_info = event['data']['info'][3] if len(event['data']['info']) > 3 else None
+            # full= event #for debug
+
+            # print(f"{timestamp()}[大航海：{user_guard_level}]") debug print
             
             # 判断身份（示例：主播 > 房管 > 舰长 > 粉丝团 > 游客）
             if username == self.streamer_name:
@@ -61,20 +74,29 @@ class BilibiliClient:
                 identity = "房管"
                 song_request_permission = True
                 next_request_permission = True
-            elif user_type == 2:
+            elif user_guard_level == 1:
+                identity = "总督"
+                song_request_permission = True
+                next_request_permission = True
+            elif user_guard_level == 2:
+                identity = "提督"
+                song_request_permission = True
+                next_request_permission = True    
+            elif user_guard_level == 3:
                 identity = "舰长"
                 song_request_permission = True
                 next_request_permission = True
-            elif medal_info and len(medal_info) > 0:
+            elif user_is_light == 1:
                 identity = "粉丝团"
                 song_request_permission = True
                 next_request_permission = False
             else:
-                identity = "游客"
+                identity = "未点亮"
                 song_request_permission = False
                 next_request_permission = False
 
-            print(f"[{self.room_id}]{timestamp()}[弹幕][ID:{username}][身份:{identity} ({user_type})][{text}]")
+            print(f"[{self.room_id}]{timestamp()}[弹幕][ID:{username}][大航海：{user_guard_level}][身份:{identity}][灯牌点亮：{user_is_light}({user_lgiht_level})][{text}]")
+            # print(f"{full}") #MANMU_MSG 元数据 for debug
 
             # 如果弹幕以“点歌”开头，解析歌曲名称并调用点歌处理器
             if text.startswith("点歌") and song_request_permission:
