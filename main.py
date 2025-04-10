@@ -1,19 +1,26 @@
-#import threading
 import asyncio
-#import json
-#import os
-#import time
+import time
 from bilibili_api import Credential
 from bilibili_api.clients import AioHTTPClient
 from bilibili_client import BilibiliClient
 from spotify_controller import SpotifyController
 from song_queue import SongQueue
 from config import load_config
-#import config_web
 from log_timer import timestamp
+from bilibili_api.utils.danmaku import Danmaku
+from config_web import load_or_prompt_config
+
+import json
+import os
+import threading
+import time
+import webbrowser
+from flask import Flask, request, render_template, redirect, url_for, flash
+from werkzeug.serving import make_server
 
 # 配置文件名称，确保这个文件与 main.py 在同一目录中
 CONFIG_FILE = 'config.json'
+MAX_RETRIES = 3
 
 def load_app_config():
     config = load_config()
@@ -27,7 +34,10 @@ def load_app_config():
 # 全局变量：SpotifyController 实例、点歌队列和当前播放状态标识
 spotify_ctrl = None
 
+# 弹幕客户端实例，用于监听弹幕消息
 # 点歌队列实例，用于存储普通用户点歌请求的歌曲
+client = None
+
 song_queue = SongQueue()
 # 点歌列队实例，用于储存大航海用户请求的歌曲
 song_queue_guard = SongQueue()
@@ -54,6 +64,8 @@ async def song_request_handler(song_name, user_guard_level, room_id):
         if current is None or not current.get('is_playing'):
             # 当前没有播放，直接播放点歌歌曲
             print(f"[{room_id}]{timestamp()}[点歌] 当前无播放，立即播放点歌。")
+            # await client.send_danmaku("点歌成功！")
+            # print(f"[{room_id}]{timestamp()}[提示] 发送弹幕：成功")
             current_is_point_requested = True # 标记为点歌歌曲
             if user_guard_level != 0:
                 current_is_point_requested_guard = True # 标记为大航海歌曲
@@ -185,15 +197,51 @@ async def player_loop(room_id):
 
 async def main():
     global spotify_ctrl, current_is_point_requested, current_is_point_requested_guard
+    global client, spotify_ctrl
 
-    # 在后台启动配置网页服务
-    #threading.Thread(target=config_web.run_config_server, daemon=True).start()
-    #threading.Thread(target=config_web.open_config_browser, daemon=True).start()
-
-    #time.sleep(2)  # 等待配置网页启动
-    print("当前版本：v1.0.2")
+    print("当前版本：v1.0.3")
     # 加载配置数据
-    config = load_app_config()
+    for attempt in range(MAX_RETRIES):
+        try:
+            config = load_or_prompt_config()
+
+            # 提取 Bilibili 配置
+            bilibili_config = config.get("bilibili", {})
+            room_id = bilibili_config.get("room_id")
+            streamer_name = bilibili_config.get("streamer_name")
+            credential_data = bilibili_config.get("credential", {})
+            sessdata = credential_data.get("sessdata")
+            bili_jct = credential_data.get("bili_jct")
+
+            credential = Credential(sessdata=sessdata, bili_jct=bili_jct)
+            client = BilibiliClient(room_id=room_id, credential=credential, streamer_name=streamer_name)
+            song_queue.room_id = room_id
+            song_queue_guard.room_id = room_id
+
+            # 提取 Spotify 配置
+            spotify_config = config.get("spotify", {})
+            spotify_ctrl = SpotifyController(
+                client_id=spotify_config["client_id"],
+                client_secret=spotify_config["client_secret"],
+                redirect_uri=spotify_config["redirect_uri"],
+                scope=spotify_config["scope"],
+                default_playlist=spotify_config["default_playlist"],
+                room_id=room_id,
+            )
+
+            print(f"[{room_id}]{timestamp()}[INFO] ✅ 初始化成功，准备启动监听...")
+            break  # 成功退出重试循环
+
+        except Exception as e:
+            print(f"❌ 第 {attempt+1} 次初始化失败：{e}")
+            if attempt < MAX_RETRIES - 1:
+                print("🔁 重新打开配置网页以修改配置...")
+                if os.path.exists(CONFIG_FILE):
+                    os.remove(CONFIG_FILE)
+                time.sleep(1)  # 等待一点时间再打开网页
+            else:
+                print("🚫 多次尝试初始化失败，程序终止。")
+                return
     
     # 从配置中提取 Bilibili 相关配置
     bilibili_config = config.get('bilibili', {})
@@ -222,7 +270,6 @@ async def main():
     spotify_default_playlist = spotify_config.get('default_playlist')
 
     # 初始化 SpotifyController 对象
-    global spotify_ctrl
     spotify_ctrl = SpotifyController(
         client_id=spotify_client_id,
         client_secret=spotify_client_secret,
@@ -234,6 +281,7 @@ async def main():
     print(f"[{room_id}]{timestamp()}[INFO] Spotify 配置加载成功！")
 
     # 初始化 BilibiliClient 对象（在 bilibili_client.py 中定义，见 :contentReference[oaicite:0]{index=0}）
+
     client = BilibiliClient(room_id=room_id, credential=credential, streamer_name=streamer_name)
 
     # 注册点歌与下一首处理器

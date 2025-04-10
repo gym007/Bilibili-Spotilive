@@ -1,17 +1,17 @@
 {
     "bilibili": {
+        "room_id": "",
+        "streamer_name": "",
         "credential": {
             "sessdata": "",
             "bili_jct": ""
-        },
-        "room_id": "",
-        "streamer_name": ""
+        }
     },
     "spotify": {
         "client_id": "",
         "client_secret": "",
         "redirect_uri": "http://127.0.0.1:8888/callback",
-        "scope": "user-read-playback-state,user-modify-playback-state,user-read-currently-playing",
-        "default_playlist": ""
+        "scope": "user-read-playback-state user-modify-playback-state",
+        "default_playlist": "https://open.spotify.com/playlist/2sOt8rRBaecTxgc7LFidrm?si=80e4759b8eeb43b2"
     }
 }

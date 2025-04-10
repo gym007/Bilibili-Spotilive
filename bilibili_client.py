@@ -1,6 +1,7 @@
 import asyncio
 import re
 from bilibili_api import live, Credential
+from bilibili_api.utils.danmaku import Danmaku
 from log_timer import timestamp
 
 class BilibiliClient:
@@ -17,6 +18,9 @@ class BilibiliClient:
         
         # 实例化弹幕客户端
         self.live_client = live.LiveDanmaku(self.room_id, credential=self.credential)
+
+        # 发送弹幕的客户端
+        self.room = live.LiveRoom(self.room_id, credential=self.credential)
         
         # 注册默认的弹幕消息处理函数
         self.live_client.on('DANMU_MSG')(self.on_danmaku)
@@ -125,7 +129,19 @@ class BilibiliClient:
       
         except Exception as e:
             print(f"[{self.room_id}]{timestamp()}[ERROR] 处理弹幕出错: {e}")
-    
+
+    async def send_danmaku(self, message):
+        """
+        发送弹幕消息到直播间
+        :param message: 要发送的弹幕内容
+        """
+        danmaku = Danmaku(text = message)
+        try:
+            await self.room.send_danmaku(danmaku = danmaku)
+            print(f"[{self.room_id}]{timestamp()}[发送] [弹幕：{message}]")
+        except Exception as e:
+            print(f"[{self.room_id}]{timestamp()}[ERROR] 发送弹幕失败: {e}")
+
     async def connect(self):
         """
         连接到 Bilibili 弹幕服务，并开始监听弹幕信息
