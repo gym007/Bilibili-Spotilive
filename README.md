@@ -21,4 +21,4 @@ B站直播弹幕点播Spotiy
 # 鸣谢
 bilibil-api-python
 仓库地址：
-[https://github.com/nemo2011/bilibili-api/tree/main/docs](https://github.com/nemo2011/bilibili-api/tree/main/docs)
+[https://github.com/Nemo2011/bilibili-api/tree/main](https://github.com/Nemo2011/bilibili-api/tree/main)
