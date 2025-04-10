@@ -17,3 +17,8 @@ B站直播弹幕点播Spotiy
 - 下一首
   - 大航海，房管，主播可以下一首
   - 下一首不能跳过大航海的点歌
+
+# 鸣谢
+bilibil-api-python
+仓库地址：
+[https://github.com/nemo2011/bilibili-api/tree/main/docs](https://github.com/nemo2011/bilibili-api/tree/main/docs)
