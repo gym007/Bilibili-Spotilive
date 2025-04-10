@@ -95,7 +95,7 @@ class BilibiliClient:
                 song_request_permission = False
                 next_request_permission = False
 
-            print(f"[{self.room_id}]{timestamp()}[弹幕][ID:{username}][大航海：{user_guard_level}][身份:{identity}][灯牌点亮：{user_is_light}({user_lgiht_level})][{text}]")
+            print(f"[{self.room_id}]{timestamp()}[弹幕] [用户：{username}][大航海：{user_guard_level}][身份:{identity}][灯牌点亮：{user_is_light}][灯牌等级：{user_lgiht_level}][发送：{text}]")
             # print(f"{full}") #MANMU_MSG 元数据 for debug
 
             # 如果弹幕以“点歌”开头，解析歌曲名称并调用点歌处理器
@@ -103,25 +103,25 @@ class BilibiliClient:
                 match = re.match(r"点歌\s*(.+)", text)
                 if match:
                     song_name = match.group(1).strip()
-                    print(f"[{self.room_id}]{timestamp()}[点歌请求] 用户 {username} 请求点歌：{song_name}")
+                    print(f"[{self.room_id}]{timestamp()}[请求] [用户：{username}][请求点歌：{song_name}]")
                     if self.song_request_handler:
-                        await self.song_request_handler(song_name, username, self.room_id)
+                        await self.song_request_handler(song_name, user_guard_level, self.room_id)
                     else:
                         print(f"[{self.room_id}]{timestamp()}[提示] 未注册点歌处理器")
                 else:
                     print(f"[{self.room_id}]{timestamp()}[错误] 点歌命令格式错误")
-            elif not song_request_permission:
-                print(f"[{self.room_id}]{timestamp()}[无权限] 用户 {username} 无权点歌")
+            elif text.startswith("点歌") and not song_request_permission:
+                print(f"[{self.room_id}]{timestamp()}[无权] [用户：{username}][无权点歌]")
             
             # 如果弹幕内容正好为“下一首”，调用下一首请求处理器
             if text == "下一首" and next_request_permission:
-                print(f"[{self.room_id}]{timestamp()}[下一首请求] 用户 {username} 请求下一首")
+                print(f"[{self.room_id}]{timestamp()}[请求] [用户：{username}][请求下一首]")
                 if self.next_request_handler:
                     await self.next_request_handler(username, self.room_id)
                 else:
                     print(f"[{self.room_id}]{timestamp()}[提示] 未注册下一首处理器")
             elif text == "下一首" and not next_request_permission:
-                print(f"[{self.room_id}]{timestamp()}[无权限] 用户 {username} 无权请求下一首")
+                print(f"[{self.room_id}]{timestamp()}[无权] [用户：{username}][无权请求下一首]")
       
         except Exception as e:
             print(f"[{self.room_id}]{timestamp()}[ERROR] 处理弹幕出错: {e}")
