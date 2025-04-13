@@ -10,7 +10,9 @@ logging.getLogger('werkzeug').disabled = True  # 禁用 Flask 日志
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 app.logger.setLevel(logging.ERROR)
+# obs_widget.py
 socketio = SocketIO(app, logger=False, engineio_logger=False)
+
 
 # 初始待播清单数据
 playlist_data = []  # 播放列表初始设为空列表
@@ -75,8 +77,7 @@ def update_playlist():
             last_playlist_data = playlist_data.copy()
             new_playlist = False
         
-        # 每次循环延时 1 秒，使用 socketio.sleep() 保持与 SocketIO 的协同
-        socketio.sleep(1)
+        socketio.sleep(0.5)  # 每秒检查一次
 
 def request_song(song_name):
     # 模拟请求歌曲的处理逻辑
@@ -88,3 +89,5 @@ def start_server():
     socketio.start_background_task(target=update_playlist)
     # 启动服务器（可通过 http://localhost:5000 访问）
     socketio.run(app, debug=False, host='0.0.0.0', port=5000, use_reloader=False)
+    
+    

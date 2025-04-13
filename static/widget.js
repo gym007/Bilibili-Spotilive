@@ -109,7 +109,6 @@ function initScrollingText(selector, margin = 50, speed = 1) {
     }
     containerEl.classList.add("scrolling");
     textEl.style.transform = `translate3d(${offset}px, 0, 0)`;
-    requestAnimationFrame(animate);
   }
 
   animate();
