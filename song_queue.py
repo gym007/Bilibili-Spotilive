@@ -62,21 +62,3 @@ class SongQueue:
             self._queue.get_nowait()
         print(f"[{self.room_id}]{timestamp()}[队列] 已清空所有待播歌曲。")
 
-# 测试代码：直接运行该模块可以进行简单测试
-#if __name__ == '__main__':
-#    async def test_song_queue():
-#        sq = SongQueue()
-#        # 定义两首测试歌曲
-#        track1 = {"name": "Song One", "artists": [{"name": "Artist A"}]}
-#        track2 = {"name": "Song Two", "artists": [{"name": "Artist B"}]}
-#        await sq.add_song(track1)
-#        await sq.add_song(track2)
-#        songs = await sq.list_songs()
-#        print("当前队列中的歌曲：", songs)
-#        next_song = await sq.get_next_song()
-#        print("获取下一首歌：", next_song)
-#        print("队列剩余数量：", sq.qsize())
-#        sq.clear()
-#        print("清空后，队列是否为空：", sq.is_empty())
-
-#    asyncio.run(test_song_queue())

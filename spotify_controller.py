@@ -59,11 +59,21 @@ class SpotifyController:
                     selected = max(matching_tracks, key=lambda t: t.get('popularity', 0))
                     return selected
                 else:
-                    # 若没有直接匹配，再采用其他策略（例如比较相似度或者返回热度最高的候选）
+                    # 若没有直接匹配，采用相似度最高的策略
+                    filtered_tracks = []
                     for track in tracks:
-                        print(f"[{self.room_id}]{timestamp()}[SPOT] [搜索] 候选歌曲: {track['name']} - {track['artists'][0]['name']} (popularity: {track.get('popularity', 'N/A')})")
-                    print(f"[{self.room_id}]{timestamp()}[SPOT] [搜索] 没有直接匹配，播放热度最高的候选歌曲")
-                    return max(tracks, key=lambda t: t.get('popularity', 0))
+                        track_name = track.get('name', '')
+                        track_normalized = normalize_text(track_name).lower()
+                        similarity = difflib.SequenceMatcher(None, query_normalized, track_normalized).ratio()
+                        if similarity >= 0.5:
+                            filtered_tracks.append((track, similarity))
+                    
+                    if filtered_tracks:
+                        # 按相似度和热度排序，优先选择热度最高的
+                        filtered_tracks.sort(key=lambda t: (t[1], t[0].get('popularity', 0)), reverse=True)
+                        best_match = filtered_tracks[0][0]
+                        print(f"[{self.room_id}]{timestamp()}[SPOT] [搜索] 筛选后热度最高的歌曲: {best_match['name']} - {best_match['artists'][0]['name']} (similarity: {filtered_tracks[0][1]:.2f}, popularity: {best_match.get('popularity', 'N/A')})")
+                        return best_match
             return None
         except Exception as e:
             print(f"[{self.room_id}]{timestamp()}[SPOT] [ERROR] 搜索歌曲出错: {e}")

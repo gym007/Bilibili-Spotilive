@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>点歌列队 Widget</title>
+
+  <!-- 引入样式文件 -->
+  <link rel="stylesheet" href="/static/index.css">
+  <link rel="stylesheet" href="/static/Rainbow.css">
+  <style>
+    #swatches {
+      display: none;
+    }
+    .scrolling {
+      transition: transform 0.05s linear;
+    }
+    #playlist {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <div id="root" class="container">
+      <div class="cover">
+        <img class="img" src="" alt="专辑封面" crossorigin="anonymous">
+        <div id="swatches"></div>
+      </div>
+      <div class="main hide-progress-bar scrolling">
+        <div class="name" style="transform: translateX(0);"></div>
+        <div class="artist" style="transform: translateX(0);"></div>
+      </div>
+    </div>
+    <ul id="playlist"></ul>
+  </div>
+
+  <script src="/static/socket.io.min.js"></script>
+  <script src="/static/vibrant_default.js"></script>
+
+  <!-- Socket.IO 客户端逻辑 -->
+  <script src="/static/widget.js"></script>
+
+  <script>
+    setTimeout(() => {
+      const rootEl = document.getElementById("root");
+      if (rootEl) {
+        rootEl.classList.add("playing");
+      }
+    }, 1000);
+  </script>
+</body>
+</html>

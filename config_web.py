@@ -128,11 +128,11 @@ class ServerThread(threading.Thread):
         self.ctx.push()
 
     def run(self):
-        print("🌐 Flask 配置网页启动中...")
+        print("[CONFIG] 🌐 Flask 配置网页启动中...")
         self.srv.serve_forever()
 
     def shutdown(self):
-        print("🛑 Flask 配置网页已关闭。")
+        print("[CONFIG] 🛑 Flask 配置网页已关闭。")
         self.srv.shutdown()
 
 server_thread = None
@@ -162,16 +162,16 @@ def load_or_prompt_config():
                     with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
                         config = json.load(f)
                         if is_config_valid(config):
-                            print("✅ 检测到有效配置，继续初始化主程序...")
+                            print("[CONFIG] ✅ 检测到有效配置，继续初始化主程序...")
                             config_ready_event.set()
                             server_thread.shutdown()
                             return
                         else:
-                            print("⚠️ 配置无效，等待中...")
+                            print("[CONFIG] ⚠️ 配置无效，等待中...")
                 except Exception:
-                    print("⚠️ 配置解析失败，等待中...")
+                    print("[CONFIG] ⚠️ 配置解析失败，等待中...")
             else:
-                print("🔍 配置文件不存在，等待中...")
+                print("[CONFIG] 🔍 配置文件不存在，等待中...")
             time.sleep(2)
 
     need_config = True
@@ -185,7 +185,7 @@ def load_or_prompt_config():
             pass
 
     if need_config:
-        print("🔧 启动配置网页...")
+        print("[CONFIG] 启动配置网页...")
         threading.Thread(target=lambda: webbrowser.open('http://localhost:5000')).start()
         global server_thread
         server_thread = ServerThread(app)
@@ -204,7 +204,7 @@ def load_or_prompt_config():
     if not config['spotify'].get('default_playlist'):
         config['spotify']['default_playlist'] = DEFAULT_PLAYLIST_URI
 
-    print("📦 配置加载成功！")
+    print("[CONFIG] 配置加载成功！")
     return config
 
 if __name__ == '__main__':
