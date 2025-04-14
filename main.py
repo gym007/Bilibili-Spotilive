@@ -288,8 +288,9 @@ async def player_loop(room_id):
                             track = queue_list[0]
                             await update_obs_widget_queue(room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
                         elif song_queue.is_empty():
+                            #current_is_point_requested = False
                             await update_obs_widget_queue(room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-                            current_is_point_requested = False
+                            
                 else:
                     # 所有队列均为空，恢复默认歌单播放
                     await update_obs_widget_queue(room_id, result="播放默认歌单", message="下一首无点歌", track=None, push_message=True, push_playlist=False)
