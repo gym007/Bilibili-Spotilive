@@ -1,10 +1,4 @@
-#当前版本v2.1.0
-#版本更新日志：
-# 1. 加入obs小组件，通过obs_widget.py输出消息到前端html页面，实时展示点歌机动态
-# 2. 优化点歌队列逻辑
-# 3. 优化点歌请求逻辑
-# 4. 优化下一首请求逻辑
-# --add-data "./templates/widget.html;./templates" --add-data "./static/images/Spotify.png;./static/images" --add-data "./static/index.css;./static/" --add-data "./static/Rainbow.css;./static" --add-data "./static/socket.io.min.js;./static/js" --add-data "./static/vibrant.js;./static/js" --add-data "./static/widget.js;./static/js"
+#当前版本v3.0.1
 
 import asyncio
 import time
@@ -51,326 +45,291 @@ def start_obs_widget():
     t = threading.Thread(target=obs_widget.start_server, daemon=True)
     t.start()
 
+# spotify和弹幕实例
 spotify_ctrl = None
-
-# 弹幕客户端实例，用于监听弹幕消息
-# 点歌队列实例，用于存储普通用户点歌请求的歌曲
 client = None
 
+# 点歌队列实例
 song_queue = SongQueue()
-# 点歌列队实例，用于储存大航海用户请求的歌曲
 song_queue_guard = SongQueue()
 
-# 用于标识当前播放是否为用户点歌（True: 点歌歌曲；False: 默认歌单歌曲）
+# 当前点歌状态标志
 current_is_point_requested = False
-# 用于标识当前播放是否为大航海用户点歌（True: 点歌歌曲；False: 默认歌单歌曲）
-current_is_point_requested_guard = False
+current_playing_guard = False
+current_playing_uid = None
 
-async def song_request_handler(song_name, user_guard_level, room_id, song_request_permission):
+
+# --- 更新 song_request_handler ---
+async def song_request_handler(song_name, user_guard_level, room_id, song_request_permission, user_uid):
     """
     点歌处理器：
       1. 搜索歌曲；
-      2. 如果当前没有播放歌曲，立即播放点歌歌曲；
-      3. 如果正在播放歌曲，根据当前播放状态决定是否立即播放或加入队列。
+      2. 如果当前未播放点播或播放非点播，则立即播放点播；
+      3. 否则，加入大航海或普通队列；
+      4. 使用 push_message_update 和 push_playlist_update 分别推送消息与列表。
     """
-    global current_is_point_requested, current_is_point_requested_guard
+    global current_is_point_requested, current_playing_uid, current_playing_guard
+
+    # 权限校验
     if not song_request_permission:
-        print(f"[{room_id}]{timestamp()}[提示] 点歌权限不足，无法点歌。")
-        await update_obs_widget_queue(room_id=room_id, result="点亮粉丝图灯牌即可点歌", message="点歌失败，权限不足", track=None, push_message=True, push_playlist=False)
+        print(f"[{room_id}]{timestamp()}[提示] 点歌权限不足，UID: {user_uid}")
+        await push_message_update(room_id, "点亮粉丝图灯牌即可点歌", "点歌失败，权限不足")
         await asyncio.sleep(5)
-        songs_guard = await song_queue_guard.list_songs()
-        songs = await song_queue.list_songs()
-        queue = songs + songs_guard
-        if not queue:
-            if not current_is_point_requested:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
-            else:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-        else:
-            track = queue[0]
-            await update_obs_widget_queue(room_id=room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
+        await push_playlist_update(room_id)
         return
 
+    # 搜索曲目
     track = await spotify_ctrl.search_song(song_name)
     if not track:
-        print(f"[{room_id}]{timestamp()}[提示] 未找到歌曲：{song_name}")
-        await update_obs_widget_queue(room_id=room_id, result="未找到符合条件的歌曲", message="点歌失败", track=None, push_message=True, push_playlist=False)
+        print(f"[{room_id}]{timestamp()}[提示] 未找到歌曲：{song_name}，UID: {user_uid}")
+        await push_message_update(room_id, "未找到符合条件的歌曲", "点歌失败，无匹配")
         await asyncio.sleep(5)
-        songs_guard = await song_queue_guard.list_songs()
-        songs = await song_queue.list_songs()
-        queue = songs + songs_guard
-        if not queue:
-            if not current_is_point_requested:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
-            else:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-        else:
-            track = queue[0]
-            await update_obs_widget_queue(room_id=room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
+        await push_playlist_update(room_id)
         return
 
-    current = await asyncio.to_thread(spotify_ctrl.sp.current_playback)
-    is_playing = current and current.get('is_playing')
-
-    if not is_playing or not current_is_point_requested:
-        # 当前未播放点歌歌曲，理解播放点歌
-        print(f"[{room_id}]{timestamp()}[点歌] 当前无播放，立即播放点歌。")
+    # 如果未播放点播，立即播放
+    if not current_is_point_requested:
         current_is_point_requested = True
-        if user_guard_level != 0:
-            current_is_point_requested_guard = True
-            await update_obs_widget_queue(room_id=room_id, result="当前无点歌，立即播放", message="大航海点歌成功", track=track, push_message=True, push_playlist=False)
+        if user_guard_level and user_guard_level > 0:
+            current_playing_guard = True
+            role_msg = "大航海点歌成功"
+            print(f"[{room_id}]{timestamp()}[点歌] 大航海立即播放：{track.get('name')}")
         else:
-            await update_obs_widget_queue(room_id=room_id, result="当前无点歌，立即播放", message="普通点歌成功", track=track, push_message=True, push_playlist=False)
+            role_msg = "普通点歌成功"
+            print(f"[{room_id}]{timestamp()}[点歌] 普通用户立即播放：{track.get('name')}")
+        await push_message_update(room_id, "当前无点歌，立即播放", role_msg, track)
         await asyncio.sleep(5)
+        current_playing_uid = user_uid
         await spotify_ctrl.play_song(track)
-        await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-
-    elif current_is_point_requested or current_is_point_requested_guard:
-        # 当前播放的是点歌歌曲，将新请求加入队列
-        queue = song_queue_guard if user_guard_level != 0 else song_queue
-        queue_type = "大航海" if user_guard_level != 0 else "普通"
-        if user_guard_level != 0:
-            current_is_point_requested_guard = True
-        current_is_point_requested = True
-        print(f"[{room_id}]{timestamp()}[列队] 加入{queue_type}待播队列。")
-        await queue.add_song(track)
-        await update_obs_widget_queue(room_id=room_id, result=f"点歌 {track['name']}", message=f"{queue_type}点歌，加入列队", track=track, push_message=True, push_playlist=False)
+        await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前正在播放点歌")
+    # 否则加入队列
+    else:
+        if user_guard_level and user_guard_level > 0:
+            queue = song_queue_guard
+            role = "大航海"
+        else:
+            queue = song_queue
+            role = "普通"
+        print(f"[{room_id}]{timestamp()}[队列] 点歌成功，加入{role}队列：{track.get('name')}")
+        await queue.add_song(track, user_uid, role)
+        await push_message_update(room_id, f"点歌 {track.get('name')}", f"点歌成功，加入{role}队列", track)
         await asyncio.sleep(5)
-        await update_obs_widget_queue(room_id=room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-    # 打印队列状态
+        await push_playlist_update(room_id)
+    
     await asyncio.sleep(1)
     await print_queue_status(room_id)
 
-async def next_request_handler(username, room_id, next_request_permission):
-    """
-    处理“下一首”请求：
-      如果待播队列有歌曲，则播放下一首；否则恢复默认歌单播放，并标记当前为默认模式。
-    """
-    global current_is_point_requested, current_is_point_requested_guard
-    if not next_request_permission:
-        print(f"[{room_id}]{timestamp()}[提示] 下一首权限不足，无法跳过。")
-        await update_obs_widget_queue(room_id=room_id, result="加入大航海即可切歌", message="下一首失败，权限不足", track=None, push_message=True, push_playlist=False)
-        await asyncio.sleep(5)
-        songs_guard = await song_queue_guard.list_songs()
-        songs = await song_queue.list_songs()
-        queue = songs + songs_guard
-        if not queue:
-            if not current_is_point_requested:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
-            else:
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-        else:
-            track = queue[0]
-            await update_obs_widget_queue(room_id=room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-        return
-
-    if current_is_point_requested and not current_is_point_requested_guard:
-        next_track = await song_queue.get_next_song()
-        if next_track:
-            song_info = f"{next_track['name']} - {next_track['artists'][0]['name']}"
-            print(f"[{room_id}]{timestamp()}[队列] 播放普通队列中的下一首：{song_info}")
-            await update_obs_widget_queue(room_id=room_id, result="立刻播放下一首", message="下一首成功", track=next_track, push_message=True, push_playlist=False)
-            await asyncio.sleep(5)
-            await spotify_ctrl.play_song(next_track)
-            if not song_queue.is_empty():
-                song_list = await song_queue.list_songs()
-                track = song_list[0]
-                await update_obs_widget_queue(room_id=room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-            elif song_queue.is_empty():
-                await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-        else:
-            print(f"[{room_id}]{timestamp()}[提示] 普通队列已空，恢复默认歌单。")
-            await update_obs_widget_queue(room_id=room_id, result="播放默认歌单", message="下一首无点歌", track=None, push_message=True, push_playlist=False)
-            await asyncio.sleep(5)
-            await spotify_ctrl.restore_default_playlist()
-            await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
-            current_is_point_requested = False
-    elif current_is_point_requested_guard:
-        print(f"[{room_id}]{timestamp()}[队列] 当前播放大航海点歌，无法跳过。")
-        if not song_queue_guard.is_empty():
-            queue_list = await song_queue_guard.list_songs()
-            track = queue_list[0]
-            await update_obs_widget_queue(room_id=room_id, result="无法跳过", message="正在播放大航海点歌", track=track, push_message=True, push_playlist=False)
-            await asyncio.sleep(5)
-            await update_obs_widget_queue(room_id=room_id, result="无法跳过", message="正在播放大航海点歌", track=track, push_message=False, push_playlist=True)
-        elif not song_queue.is_empty():
-            song_list = await song_queue.list_songs()
-            track = song_list[0]
-            await update_obs_widget_queue(room_id=room_id, result="无法跳过", message="正在播放大航海点歌", track=track, push_message=True, push_playlist=False)
-            await asyncio.sleep(5)
-            await update_obs_widget_queue(room_id=room_id, result="无法跳过", message="正在播放大航海点歌", track=track, push_message=False, push_playlist=True)
-        else:
-            await update_obs_widget_queue(room_id=room_id, result="无法跳过", message="正在播放大航海点歌", track=None, push_message=True, push_playlist=False)
-            asyncio.sleep(5)
-            await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
+# --- next_request_handler ---
+async def next_request_handler(username, user_guard_level, room_id, next_request_permission, user_uid):
+    global current_is_point_requested, current_playing_uid, current_playing_guard
+    
+    # 权限校验
+    if user_uid == current_playing_uid:
+        allow_next = True
     else:
-        print(f"[{room_id}]{timestamp()}[提示] 所有队列已空，恢复默认歌单。")
-        await update_obs_widget_queue(room_id=room_id, result="播放默认歌单", message="下一首无点歌", track=None, push_message=True, push_playlist=False)
+        allow_next = next_request_permission
+
+    if not allow_next:
+        print(f"[{room_id}]{timestamp()}[提示] 下一首权限不足")
+        await push_message_update(room_id, "加入大航海即可切歌", "下一首失败，权限不足")
+        await asyncio.sleep(5)
+        await push_playlist_update(room_id)
+        return
+    
+    if not current_is_point_requested:
+        print(f"[{room_id}]{timestamp()}[提示] 当前无点歌，恢复默认歌单。")
         current_is_point_requested = False
+        current_playing_uid = None
+        current_playing_guard = False
+        await push_message_update(room_id, "下一首随机播放默认歌单", "当前无点歌")
         await asyncio.sleep(5)
         await spotify_ctrl.restore_default_playlist()
-        await update_obs_widget_queue(room_id=room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
+        await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前无点歌")
+        return
 
-    # 打印队列状态
+    if current_playing_guard and user_uid != current_playing_uid:
+
+        print(f"[{room_id}]{timestamp()}[提示] 当前正在播放其他大航海点歌，无法切歌。")
+        await push_message_update(room_id, "当前正在播放大航海点歌", "下一首失败")
+        await asyncio.sleep(5)
+        await push_playlist_update(room_id)
+        return
+
+    if not song_queue_guard.is_empty():
+        queue = song_queue_guard
+        current_is_point_requested = True
+        current_playing_guard = True
+    else:
+        queue = song_queue
+        current_playing_guard = False
+
+    item = await queue.get_next_song()
+    if item:
+        track = item["song"]
+        req_uid = item["request_uid"]
+        current_playing_uid = req_uid
+
+        print(f"[{room_id}]{timestamp()}[切歌] 下一首成功，立即播放下一首")
+        await push_message_update(room_id, "立即播放下一首", "下一首成功", track)
+        await asyncio.sleep(5)
+        await spotify_ctrl.play_song(track)
+        await push_playlist_update(room_id)
+    else:
+        print(f"[{room_id}]{timestamp()}[提示] 当前无点歌，恢复默认歌单。")
+        current_is_point_requested = False
+        current_playing_uid = None
+        current_playing_guard = False
+        await push_message_update(room_id, "下一首随机播放默认歌单", "当前无点歌")
+        await asyncio.sleep(5)
+        await spotify_ctrl.restore_default_playlist()
+        await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前无点歌")
+
     await asyncio.sleep(1)
     await print_queue_status(room_id)
 
-async def update_obs_widget_queue(room_id, result, message, track, push_message, push_playlist):
+# --- update_obs_widget_queue ---
+async def update_obs_widget(room_id, result, message, track, push_message, push_playlist):
     """
-    更新 OBS widget 的队列数据
-    优先从大航海队列（song_queue_guard）中选取，
-    然后从普通队列（song_queue）中补充。
+    同步推送当前播放信息和待播列表给 OBS widget。
+    push_message: 是否触发新的 message_data 推送
+    push_playlist: 是否触发新的 playlist_data 推送
     """
-    # 获取大航海队列和普通队列的所有待播歌曲
     songs_guard = await song_queue_guard.list_songs()
     songs = await song_queue.list_songs()
-
-    # 合并队列并格式化为 OBS widget 所需的数据
-    obs_widget.playlist_data = [
-        {
-            "name": f"{song.get('name', '未知歌曲')} - {song.get('artists', [{'name': '未知'}])[0].get('name', '未知')}",
-            "albumCover": song.get('album', {}).get('images', [{}])[0].get('url', '')
+    combined = songs_guard + songs
+    # 列表部分
+    if push_playlist:
+        obs_widget.playlist_data = [{
+            "name": f"{item['song'].get('name','未知歌曲')} - {item['song'].get('artists',[{'name':'未知'}])[0]['name']}",
+            "albumCover": item['song'].get('album',{}).get('images',[{}])[0].get('url',''),
+            "request_uid": item.get('request_uid')
+        } for item in combined]
+    # 消息部分
+    if push_message:
+        obs_widget.message_data = {
+            "message": message,
+            "result": result,
+            "albumCover": track.get('album',{}).get('images',[{}])[0].get('url','') if track else '/static/images/Spotify.png'
         }
-        for song in songs_guard + songs
-    ]
-
-    # 更新当前播放信息
-    obs_widget.message_data = {
-        "message": message,
-        "result": result,
-        "albumCover": track.get('album', {}).get('images', [{}])[0].get('url', '') if track else '/static/images/Spotify.png',
-    }
-
     obs_widget.new_message = push_message
     obs_widget.new_playlist = push_playlist
     obs_widget.room_id = room_id
 
-    # 调试输出
-    #print(f"[{room_id}]{timestamp()}[OBS Widget] Playlist: {obs_widget.playlist_data}")
-    #print(f"[{room_id}]{timestamp()}[OBS Widget] Message: {obs_widget.message_data}")
+# --- push_playlist_update ---
+async def push_playlist_update(room_id):
+    """单独推送当前待播清单，不修改播放信息，仅更新列表。"""
+    global current_is_point_requested
 
+    songs_guard = await song_queue_guard.list_songs()
+    songs = await song_queue.list_songs()
+    combined = songs_guard + songs
+    if combined:
+        await update_obs_widget(room_id, None, None, None, False, True)
+    elif current_is_point_requested:
+        await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前正在播放点歌")
+    else:
+        await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前无点歌")
+
+# --- push_message_update ---
+async def push_message_update(room_id, result, message, track=None):
+    """单独推送播放信息，不修改列表，仅更新 message_data。"""
+    await update_obs_widget(room_id, result, message, track, True, False)
+
+# --- player_loop ---
 async def player_loop(room_id):
     """
     后台任务：
       持续检测当前点播播放状态，
-      如果当前没有点播播放且待播队列为空，则恢复默认歌单播放，并将播放标识设置为默认模式（False）。
+      如果当前没有点播播放且有待播队列，则优先播放大航海队列，再播放普通队列；
+      队列空时恢复默认歌单，并重置点歌状态。
     """
-    global current_is_point_requested, current_is_point_requested_guard
+    global current_is_point_requested, current_playing_uid, current_playing_guard
 
     while True:
         try:
+            # 查询 Spotify 播放状态
             current = await asyncio.to_thread(spotify_ctrl.sp.current_playback)
-            is_playing = current and current.get('is_playing')
+            is_playing = current and current.get("is_playing")
 
+            # 如果当前没在播但有点歌请求
             if not is_playing and current_is_point_requested:
+                # 1. 选择队列：大航海优先
                 if not song_queue_guard.is_empty():
-                    next_track = await song_queue_guard.get_next_song()
-                    if next_track:
-                        await spotify_ctrl.play_song(next_track)
-                        if not song_queue_guard.is_empty():
-                            queue_list = await song_queue_guard.list_songs()
-                            track = queue_list[0]
-                            await update_obs_widget_queue(room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-                        elif song_queue_guard.is_empty():
-                            if not song_queue.is_empty():
-                                queue_list = await song_queue.list_songs()
-                                track = queue_list[0]
-                                await update_obs_widget_queue(room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-                            elif song_queue.is_empty():
-                                await update_obs_widget_queue(room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
+                    queue = song_queue_guard
+                    current_playing_guard = True
                 elif not song_queue.is_empty():
-                    current_is_point_requested_guard = False
-                    next_track = await song_queue.get_next_song()
-                    if next_track:
-                        await spotify_ctrl.play_song(next_track)
-                        if not song_queue.is_empty():
-                            queue_list = await song_queue.list_songs()
-                            track = queue_list[0]
-                            await update_obs_widget_queue(room_id, result="展示列队", message="展示列队", track=track, push_message=False, push_playlist=True)
-                        elif song_queue.is_empty():
-                            #current_is_point_requested = False
-                            await update_obs_widget_queue(room_id, result="发送：点歌 + 歌名 点歌", message="当前正在播放点歌", track=None, push_message=True, push_playlist=False)
-                            
+                    queue = song_queue
+                    current_playing_guard = False
                 else:
-                    # 所有队列均为空，恢复默认歌单播放
-                    await update_obs_widget_queue(room_id, result="播放默认歌单", message="下一首无点歌", track=None, push_message=True, push_playlist=False)
-                    await spotify_ctrl.restore_default_playlist()
+                    queue = None
+                    current_playing_guard = False
+
+                # 2. 播放下一首
+                if queue:
+                    item = await queue.get_next_song()
+                    track = item["song"]
+                    req_uid = item["request_uid"]
+
+                    current_is_point_requested = True
+                    current_playing_uid = req_uid
+                    await spotify_ctrl.play_song(track)
+                    await push_playlist_update(room_id)
+
+                # 3. 队列空 -> 恢复默认歌单
+                else:
                     current_is_point_requested = False
-                    current_is_point_requested_guard = False
-                    await asyncio.sleep(5)
-                    await update_obs_widget_queue(room_id, result="发送：点歌 + 歌名 点歌", message="当前无点歌", track=None, push_message=True, push_playlist=False)
-                    
+                    current_playing_uid = None
+                    current_playing_guard = False
+
+                    await spotify_ctrl.restore_default_playlist()
+                    await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前无点歌")
+
+            # 轮询间隔
             await asyncio.sleep(1)
+
         except Exception as e:
             print(f"[{room_id}]{timestamp()}[ERROR] 后台任务出错：{e}")
             await asyncio.sleep(1)
 
-async def print_queue_status(room_id):
-    """
-    打印当前普通队列和大航海队列的状态。
-    """
-    songs_guard = await song_queue_guard.list_songs()
-    songs = await song_queue.list_songs()
 
+# --- print_queue_status ---
+async def print_queue_status(room_id):
+    songs_guard = await song_queue_guard.list_songs(); songs = await song_queue.list_songs()
+    print(f"[{room_id}]{timestamp()}[队列] ----------------------------------------")
     if songs_guard:
         print(f"[{room_id}]{timestamp()}[队列] 当前大航海待播队列：{len(songs_guard)} 首")
-        for index, song in enumerate(songs_guard, start=1):
-            print(f"[{room_id}]{timestamp()}[列队] {index}: {song['name']} - {song['artists'][0]['name']}")
+        for idx, item in enumerate(songs_guard, start=1):
+            t = item['song']; uid = item.get('request_uid'); name = t.get('name','未知歌曲'); art = t.get('artists',[{'name':'未知'}])[0].get('name')
+            print(f"[{room_id}]{timestamp()}[队列] {idx}: {name} - {art} (UID: {uid})")
     else:
         print(f"[{room_id}]{timestamp()}[队列] 当前大航海歌曲列表：无")
-
     if songs:
         print(f"[{room_id}]{timestamp()}[队列] 当前普通待播队列：{len(songs)} 首")
-        for index, song in enumerate(songs, start=1):
-            print(f"[{room_id}]{timestamp()}[列队] {index}: {song['name']} - {song['artists'][0]['name']}")
+        for idx, item in enumerate(songs, start=1):
+            t = item['song']; uid = item.get('request_uid'); name = t.get('name','未知歌曲'); art = t.get('artists',[{'name':'未知'}])[0].get('name')
+            print(f"[{room_id}]{timestamp()}[队列] {idx}: {name} - {art} (UID: {uid})")
     else:
         print(f"[{room_id}]{timestamp()}[队列] 当前普通歌曲列表：无")
+    print(f"[{room_id}]{timestamp()}[队列] ----------------------------------------")
 
 async def main():
     global spotify_ctrl, current_is_point_requested, current_is_point_requested_guard
     global client, spotify_ctrl
 
-    # 启动 OBS Widget 服务器
-
     print("[VERSION] ----------------------------")
     print("[VERSION] Bilibili-Spotilive 弹幕Spotify点歌机")
-    print("[VERSION] 当前版本：v2.1.0")
+    print("[VERSION] 当前版本：v3.0.1")
     print("[VERSION] GitHub仓库地址：")
     print("[VERSION] https://github.com/jo4rchy/Bilibili-Spotilive")
     print("[VERSION] ----------------------------")
 
-    # 加载配置数据
     for attempt in range(MAX_RETRIES):
         try:
             config = load_or_prompt_config()
-
-            # 提取 Bilibili 配置
             bilibili_config = config.get("bilibili", {})
             room_id = bilibili_config.get("room_id")
-            streamer_name = bilibili_config.get("streamer_name")
-            credential_data = bilibili_config.get("credential", {})
-            sessdata = credential_data.get("sessdata")
-            bili_jct = credential_data.get("bili_jct")
-
-            credential = Credential(sessdata=sessdata, bili_jct=bili_jct)
-            client = BilibiliClient(room_id=room_id, credential=credential, streamer_name=streamer_name)
-            song_queue.room_id = room_id
-            song_queue_guard.room_id = room_id
-
-            # 提取 Spotify 配置
-            spotify_config = config.get("spotify", {})
-            spotify_ctrl = SpotifyController(
-                client_id=spotify_config["client_id"],
-                client_secret=spotify_config["client_secret"],
-                redirect_uri=spotify_config["redirect_uri"],
-                scope=spotify_config["scope"],
-                default_playlist=spotify_config["default_playlist"],
-                room_id=room_id,
-            )
-
             print(f"[{room_id}]{timestamp()}[INFO] ✅ 初始化成功，准备启动监听...")
-            break  # 成功退出重试循环
-
+            break
         except Exception as e:
             print(f"❌ 第 {attempt+1} 次初始化失败：{e}")
             if attempt < MAX_RETRIES - 1:
@@ -381,24 +340,17 @@ async def main():
             else:
                 print("🚫 多次尝试初始化失败，程序终止。")
                 return
-    
+
+    config = load_config()
+
     # 从配置中提取 Bilibili 相关配置
     bilibili_config = config.get('bilibili', {})
     room_id = bilibili_config.get('room_id')
-    streamer_name = bilibili_config.get('streamer_name')
-    credential_data = bilibili_config.get('credential', {})
-    sessdata = credential_data.get('sessdata')
-    bili_jct = credential_data.get('bili_jct')
 
     song_queue.room_id = room_id  # 初始化点歌队列实例，传入房间号
     song_queue_guard.room_id = room_id  # 初始化大航海点歌队列实例，传入房间号
     
-    # 使用从配置中获取的 sessdata 和 bili_jct 创建 Credential 对象
-    credential = Credential(sessdata=sessdata, bili_jct=bili_jct)
-    
     print(f"[{room_id}]{timestamp()}[INFO] Bilibili 配置加载成功！")
-    print(f"[{room_id}]{timestamp()}[INFO] 房间号: {room_id}")
-    print(f"[{room_id}]{timestamp()}[INFO] 主播名称: {streamer_name}")  
 
     # 提取 spotify 配置
     spotify_config = config.get('spotify', {})
@@ -419,9 +371,8 @@ async def main():
     )
     print(f"[{room_id}]{timestamp()}[INFO] Spotify 配置加载成功！")
 
-    # 初始化 BilibiliClient 对象（在 bilibili_client.py 中定义，见 :contentReference[oaicite:0]{index=0}）
-
-    client = BilibiliClient(room_id=room_id, credential=credential, streamer_name=streamer_name)
+    # 初始化 BilibiliClient 对象
+    client = BilibiliClient()
 
     # 注册点歌与下一首处理器
     client.set_song_request_handler(song_request_handler)

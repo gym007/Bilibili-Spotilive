@@ -40,7 +40,7 @@ class SpotifyController:
             query_normalized = normalize_text(song_name).lower()
             
             # 使用 Spotify API 搜索候选结果（limit 可根据需要调整）
-            results = self.sp.search(q=song_name, type='track', limit=2)
+            results = self.sp.search(q=song_name, type='track', limit=3)
             tracks = results.get('tracks', {}).get('items', [])
             # print(f"[搜索] 返回的候选歌曲列表: {tracks}") debug print
             

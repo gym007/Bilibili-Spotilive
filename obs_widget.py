@@ -66,14 +66,16 @@ def update_playlist():
         # 检查消息数据更新
         if message_data and new_message:
             socketio.emit('message_update', message_data)
-            print(f'[{room_id}]{timestamp()}[SKIO] 已发送消息更新 {message_data}')
+            print(f'[{room_id}]{timestamp()}[SKIO] 已发送前端消息更新')
+            #print(f'[{room_id}]{timestamp()}[SKIO] 已发送消息更新 {message_data}')
             last_message_data = message_data.copy()
             new_message = False
         
         # 检查播放列表更新
         if playlist_data and new_playlist:
             socketio.emit('playlist_update', playlist_data)
-            print(f'[{room_id}]{timestamp()}[SKIO] 已发送待播清单更新 {playlist_data}')
+            print(f'[{room_id}]{timestamp()}[SKIO] 已发送待播清单更新')
+            #print(f'[{room_id}]{timestamp()}[SKIO] 已发送待播清单更新 {playlist_data}')
             last_playlist_data = playlist_data.copy()
             new_playlist = False
         
