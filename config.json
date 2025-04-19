@@ -1,11 +1,25 @@
 {
     "bilibili": {
-        "room_id": "",
-        "streamer_name": "",
+        "room_id": "14005966",
         "credential": {
             "sessdata": "",
             "bili_jct": ""
-        }
+        },
+        "song_request_permission": {
+            "streamer": true,
+            "room_admin": true,
+            "guard": true,
+            "medal_light": true,
+            "medal_level": "5"
+        },
+        "next_request_permission": {
+            "streamer": true,
+            "room_admin": true,
+            "guard": true,
+            "medal_light": false,
+            "medal_level": "100"
+        },
+        "streamer_name": ""
     },
     "spotify": {
         "client_id": "",
