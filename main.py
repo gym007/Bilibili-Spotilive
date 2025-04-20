@@ -1,4 +1,4 @@
-#当前版本v3.0.1
+#当前版本v3.0.2
 
 import asyncio
 import time
@@ -313,12 +313,12 @@ async def print_queue_status(room_id):
     print(f"[{room_id}]{timestamp()}[队列] ----------------------------------------")
 
 async def main():
-    global spotify_ctrl, current_is_point_requested, current_is_point_requested_guard
+    global spotify_ctrl, current_is_point_requested, current_playing_uid, current_playing_guard
     global client, spotify_ctrl
 
     print("[VERSION] ----------------------------")
     print("[VERSION] Bilibili-Spotilive 弹幕Spotify点歌机")
-    print("[VERSION] 当前版本：v3.0.1")
+    print("[VERSION] 当前版本：v3.0.2")
     print("[VERSION] GitHub仓库地址：")
     print("[VERSION] https://github.com/jo4rchy/Bilibili-Spotilive")
     print("[VERSION] ----------------------------")

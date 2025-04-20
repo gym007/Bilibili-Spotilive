@@ -103,9 +103,11 @@ class BilibiliClient:
                 user_medal_is_light = event['data']['info'][0][15]['user']['medal']['is_light']
                 user_medal_level = event['data']['info'][0][15]['user']['medal']['level']
             else:
-                user_guard_level = None
-                user_medal_is_light = None
-                user_medal_level = None
+                user_guard_level = 0
+                user_medal_is_light = 0
+                user_medal_level = 0
+            #print(f"{user_guard_level}, {user_medal_is_light}, {user_medal_level}")
+            #print(type(user_guard_level), type(user_medal_is_light), type(user_medal_level))
 
             # 提取用户名和 UID
             user_name = user_info[1]
@@ -148,7 +150,7 @@ class BilibiliClient:
                 else:
                     next_request_permission = False
 
-            print(f"[{self.room_id}]{timestamp()}[弹幕] [用户：{user_name}][大航海：{user_guard_level}][身份:{identity}][灯牌点亮：{user_medal_is_light}][灯牌等级：{user_medal_level}][发送：{text}]")            
+            print(f"[{self.room_id}]{timestamp()}[弹幕] [用户：{user_name}][身份:{identity}][灯牌点亮：{user_medal_is_light}][灯牌等级：{user_medal_level}][发送：{text}]")            
 
             if text.startswith("点歌"):
                 match = re.match(r"点歌\s*(.+)", text)
