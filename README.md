@@ -7,8 +7,10 @@ B站直播弹幕点播Spotiy
 - 运行v3.0.4.exe
 - 按照提示配置点歌机
   - Bilibili的cookie，直播房间号
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/images/bilibili_cookies.png)
   - 点歌机权限
   - Spotify API
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/images/spotify_api.png)
 
 # 点歌指令
 - 点歌 歌名 歌手(可选)
