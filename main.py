@@ -1,4 +1,4 @@
-#当前版本v3.0.2
+#当前版本v3.0.4
 
 import asyncio
 import time
@@ -52,6 +52,7 @@ client = None
 # 点歌队列实例
 song_queue = SongQueue()
 song_queue_guard = SongQueue()
+song_queue_streamer = SongQueue()
 
 # 当前点歌状态标志
 current_is_point_requested = False
@@ -90,13 +91,17 @@ async def song_request_handler(song_name, user_guard_level, room_id, song_reques
     # 如果未播放点播，立即播放
     if not current_is_point_requested:
         current_is_point_requested = True
-        if user_guard_level and user_guard_level > 0:
+        if user_guard_level and user_guard_level == 100:
+            current_playing_guard = True
+            role_msg = "主播点歌成功"
+            print(f"[{room_id}]{timestamp()}[点歌] 主播 立即播放：{track.get('name')}")
+        elif user_guard_level and user_guard_level > 0:
             current_playing_guard = True
             role_msg = "大航海点歌成功"
-            print(f"[{room_id}]{timestamp()}[点歌] 大航海立即播放：{track.get('name')}")
+            print(f"[{room_id}]{timestamp()}[点歌] 大航海 立即播放：{track.get('name')}")
         else:
             role_msg = "普通点歌成功"
-            print(f"[{room_id}]{timestamp()}[点歌] 普通用户立即播放：{track.get('name')}")
+            print(f"[{room_id}]{timestamp()}[点歌] 普通用户 立即播放：{track.get('name')}")
         await push_message_update(room_id, "当前无点歌，立即播放", role_msg, track)
         await asyncio.sleep(5)
         current_playing_uid = user_uid
@@ -104,7 +109,10 @@ async def song_request_handler(song_name, user_guard_level, room_id, song_reques
         await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前正在播放点歌")
     # 否则加入队列
     else:
-        if user_guard_level and user_guard_level > 0:
+        if user_guard_level and user_guard_level == 100:
+            queue = song_queue_streamer
+            role = "主播"
+        elif user_guard_level and user_guard_level > 0:
             queue = song_queue_guard
             role = "大航海"
         else:
@@ -155,12 +163,17 @@ async def next_request_handler(username, user_guard_level, room_id, next_request
         await push_playlist_update(room_id)
         return
 
-    if not song_queue_guard.is_empty():
+    if not song_queue_streamer.is_empty():
+        queue = song_queue_streamer
+        current_is_point_requested = True
+        current_playing_guard = True
+    elif not song_queue_guard.is_empty():
         queue = song_queue_guard
         current_is_point_requested = True
         current_playing_guard = True
     else:
         queue = song_queue
+        current_is_point_requested = True
         current_playing_guard = False
 
     item = await queue.get_next_song()
@@ -194,9 +207,10 @@ async def update_obs_widget(room_id, result, message, track, push_message, push_
     push_message: 是否触发新的 message_data 推送
     push_playlist: 是否触发新的 playlist_data 推送
     """
+    songs_streamer = await song_queue_streamer.list_songs()
     songs_guard = await song_queue_guard.list_songs()
     songs = await song_queue.list_songs()
-    combined = songs_guard + songs
+    combined = songs_streamer + songs_guard + songs
     # 列表部分
     if push_playlist:
         obs_widget.playlist_data = [{
@@ -220,9 +234,10 @@ async def push_playlist_update(room_id):
     """单独推送当前待播清单，不修改播放信息，仅更新列表。"""
     global current_is_point_requested
 
+    songs_streamer = await song_queue_streamer.list_songs()
     songs_guard = await song_queue_guard.list_songs()
     songs = await song_queue.list_songs()
-    combined = songs_guard + songs
+    combined = songs_streamer + songs_guard + songs
     if combined:
         await update_obs_widget(room_id, None, None, None, False, True)
     elif current_is_point_requested:
@@ -254,7 +269,14 @@ async def player_loop(room_id):
             # 如果当前没在播但有点歌请求
             if not is_playing and current_is_point_requested:
                 # 1. 选择队列：大航海优先
-                if not song_queue_guard.is_empty():
+
+                print(f"[{room_id}]{timestamp()}[LOOP] LOOP检测到播放状态变化")
+                print(f"[{room_id}]{timestamp()}[LOOP] LOOP列队更新")
+
+                if not song_queue_streamer.is_empty():
+                    queue = song_queue_streamer
+                    current_playing_guard = True
+                elif not song_queue_guard.is_empty():
                     queue = song_queue_guard
                     current_playing_guard = True
                 elif not song_queue.is_empty():
@@ -283,7 +305,9 @@ async def player_loop(room_id):
 
                     await spotify_ctrl.restore_default_playlist()
                     await push_message_update(room_id, "发送：点歌 + 歌名 点歌", "当前无点歌")
-
+                
+                await print_queue_status(room_id)
+            
             # 轮询间隔
             await asyncio.sleep(1)
 
@@ -294,8 +318,18 @@ async def player_loop(room_id):
 
 # --- print_queue_status ---
 async def print_queue_status(room_id):
-    songs_guard = await song_queue_guard.list_songs(); songs = await song_queue.list_songs()
+    songs_streamer = await song_queue_streamer.list_songs()
+    songs_guard = await song_queue_guard.list_songs()
+    songs = await song_queue.list_songs()
     print(f"[{room_id}]{timestamp()}[队列] ----------------------------------------")
+    if songs_streamer:
+        print(f"[{room_id}]{timestamp()}[队列] 当前主播待播队列：{len(songs_streamer)} 首")
+        for idx, item in enumerate(songs_streamer, start=1):
+            t = item['song']; uid = item.get('request_uid'); name = t.get('name','未知歌曲'); art = t.get('artists',[{'name':'未知'}])[0].get('name')
+            print(f"[{room_id}]{timestamp()}[队列] {idx}: {name} - {art} (UID: {uid})")
+    else:
+        print(f"[{room_id}]{timestamp()}[队列] 当前主播歌曲列表：无")
+    print(f"[{room_id}]{timestamp()}[队列] ------------------")
     if songs_guard:
         print(f"[{room_id}]{timestamp()}[队列] 当前大航海待播队列：{len(songs_guard)} 首")
         for idx, item in enumerate(songs_guard, start=1):
@@ -303,6 +337,7 @@ async def print_queue_status(room_id):
             print(f"[{room_id}]{timestamp()}[队列] {idx}: {name} - {art} (UID: {uid})")
     else:
         print(f"[{room_id}]{timestamp()}[队列] 当前大航海歌曲列表：无")
+    print(f"[{room_id}]{timestamp()}[队列] ------------------")
     if songs:
         print(f"[{room_id}]{timestamp()}[队列] 当前普通待播队列：{len(songs)} 首")
         for idx, item in enumerate(songs, start=1):
@@ -318,7 +353,7 @@ async def main():
 
     print("[VERSION] ----------------------------")
     print("[VERSION] Bilibili-Spotilive 弹幕Spotify点歌机")
-    print("[VERSION] 当前版本：v3.0.2")
+    print("[VERSION] 当前版本：v3.0.4")
     print("[VERSION] GitHub仓库地址：")
     print("[VERSION] https://github.com/jo4rchy/Bilibili-Spotilive")
     print("[VERSION] ----------------------------")
@@ -347,8 +382,10 @@ async def main():
     bilibili_config = config.get('bilibili', {})
     room_id = bilibili_config.get('room_id')
 
+    song_queue_streamer.room_id = room_id  # 初始化主播点歌队列实例，传入房间号
     song_queue.room_id = room_id  # 初始化点歌队列实例，传入房间号
     song_queue_guard.room_id = room_id  # 初始化大航海点歌队列实例，传入房间号
+
     
     print(f"[{room_id}]{timestamp()}[INFO] Bilibili 配置加载成功！")
 
@@ -381,13 +418,12 @@ async def main():
     print(f"[{room_id}]{timestamp()}[INFO] ------------------")
     start_obs_widget()
     await asyncio.sleep(1)  # 等待服务器启动
-    print(f"[{room_id}]{timestamp()}[INFO] OBS 小组件已启动，访问 http://localhost:5000")
-    print(f"[{room_id}]{timestamp()}[INFO] OBS 添加浏览器采集：")
+    print(f"[{room_id}]{timestamp()}[INFO] OBS 小组件已启动，添加浏览器采集：")
     print(f"[{room_id}]{timestamp()}[INFO] http://localhost:5000")
     print(f"[{room_id}]{timestamp()}[INFO] 即可展示点歌机状态小组件")
     print(f"[{room_id}]{timestamp()}[INFO] ------------------")
 
-    print(f"[{room_id}]{timestamp()}[INFO] 启动 Bilibili 弹幕监听 ...")
+    print(f"[{room_id}]{timestamp()}[INFO] 启动 Bilibili 弹幕监听...")
 
     # 调用 connect() 方法连接弹幕服务，这个方法是异步的，会一直监听直到程序关闭
     await asyncio.gather(

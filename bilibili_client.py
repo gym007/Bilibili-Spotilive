@@ -58,8 +58,12 @@ class BilibiliClient:
 
         # 获取主播名称
         self.streamer_name = await self.get_streamer_name()
+        self.streamer_uid = await self.get_streamer_uid()
+
         print(f"[{self.room_id}]{timestamp()}[INFO] 主播名称: {self.streamer_name}")
-        print(f"[{self.room_id}]{timestamp()}[INFO] 房间号: {self.room_id}")
+        print(f"[{self.room_id}]{timestamp()}[INFO] 主播 UID: {self.streamer_uid}")
+        print(f"[{self.room_id}]{timestamp()}[INFO] 主播房间号: {self.room_id}")
+        print(f"[{self.room_id}]{timestamp()}[INFO] ------------------")
 
         # 注册弹幕事件处理器
         self.live_client.on('DANMU_MSG')(self.on_danmaku)
@@ -73,6 +77,13 @@ class BilibiliClient:
         """
         room_info = await self.room.get_room_info()
         return room_info['anchor_info']['base_info']['uname']
+
+    async def get_streamer_uid(self):
+        """
+        自动获取主播 UID
+        """
+        room_info = await self.room.get_room_info()
+        return room_info['room_info']['uid']    
     
     def set_song_request_handler(self, handler):
         """
@@ -118,6 +129,7 @@ class BilibiliClient:
                 identity = "主播"
                 song_request_permission = self.song_request_permission_treamer
                 next_request_permission = self.next_request_permission_treamer
+                user_guard_level = 100  # 主播的守护等级设为100，确保拥有最高权限
             elif user_type == 1:
                 identity = "房管"
                 song_request_permission = self.song_request_permission_admin
