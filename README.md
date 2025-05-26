@@ -3,8 +3,8 @@ B站直播弹幕点播Spotiy
 
 # 如何使用
 
-- 下载Bilibili-Spotilive-v3.0.1
-- 运行v3.0.1.exe
+- 下载Bilibili-Spotilive-v3.0.4
+- 运行v3.0.4.exe
 - 按照提示配置点歌机
   - Bilibili的cookie，直播房间号
   - 点歌机权限
