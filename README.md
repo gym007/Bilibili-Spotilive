@@ -8,13 +8,13 @@ B站直播弹幕点播Spotiy
 - 配置点歌机
   - Bilibili的cookies
   - 浏览器登陆Bilibili，F12开发者模式可以获取到对应cookies
-![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/images/bilibili_cookies.png)
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/bilibili_cookies.png)
 
   - Spotify API
   - 前往[Spotify Developer](https://developer.spotify.com/dashboard) 如图页面创建Spotify 的API
   - Redirect Url填写 `http://127.0.0.1:8888/callback`,api和sdk不需要勾选
   - 创建好后可以获得Spotify 的client ID和secret
-![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/images/spotify_api.png)
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/spotify_api.png)
 
   - 房间号，点歌权限等
 
