@@ -27,7 +27,6 @@ v3.1.0 Pre Release
 - OBS添加浏览器捕获
   - Now Playing小组件地址 `http://localhost:5001/nowplaying_widget/`
   - 点歌机小组件地址 `http://localhost:5001/queue_widget/`
-
 ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/obs_urls.png)
 
 # 最终效果
