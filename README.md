@@ -1,4 +1,4 @@
-# Bilibili-Spotilive
+# Bilibili-Spotilive v3.1.0 Pre-Release
 B站直播弹幕点播Spotiy
 
 [v3.1.0 Pre Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Pre-Release)
