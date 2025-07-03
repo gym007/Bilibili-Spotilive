@@ -1,10 +1,16 @@
 # Bilibili-Spotilive
 B站直播弹幕点播Spotiy
+v3.1.0 Pre Release
+
+# What's New
+- 使用Vite + React控制html小组件
+- 添加本地使用的 Spotify Now Playing 小组件，风格统一，不再依赖第三方nowplaying小组件
+- 修改端口 5000 -> 5001，防止和OS X的airplay冲突 
 
 # 如何使用
 
-- 下载Bilibili-Spotilive-v3.0.4
-- 运行v3.0.4.exe
+- 下载Bilibili-Spotilive-v3.1.0 Pre-Release
+- 运行v3.1.0
 - 配置点歌机
   - Bilibili的cookies
   - 浏览器登陆Bilibili，F12开发者模式可以获取到对应cookies
@@ -17,6 +23,15 @@ B站直播弹幕点播Spotiy
 ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/spotify_api.png)
 
   - 房间号，点歌权限等
+
+- OBS添加浏览器捕获
+  - Now Playing小组件地址 `http://localhost:5001/nowplaying_widget/`
+  - 点歌机小组件地址 `http://localhost:5001/queue_widget/`
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/obs_urls.png)
+
+# 最终效果
+- 如图
+![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/how_it_looks.png)
 
 # 点歌指令
 - 点歌 歌名 歌手(可选)
