@@ -1,7 +1,7 @@
-# Bilibili-Spotilive v3.1.0 Pre-Release
+# Bilibili-Spotilive v3.1.0
 B站直播弹幕点播Spotiy
 
-[v3.1.0 Pre Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Pre-Release)
+[v3.1.0 Stable](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Stable)
 
 # What's New
 - 使用Vite + React控制html小组件
@@ -10,7 +10,7 @@ B站直播弹幕点播Spotiy
 
 # 如何使用
 
-- [下载Bilibili-Spotilive-v3.1.0 Pre-Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Pre-Release)
+- [下载Bilibili-Spotilive-v3.1.0 Stable Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Stable)
 - 运行v3.1.0
 - 配置点歌机
   - Bilibili的cookies
