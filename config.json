@@ -10,7 +10,7 @@
             "room_admin": true,
             "guard": true,
             "medal_light": true,
-            "medal_level": "5"
+            "medal_level": "1"
         },
         "next_request_permission": {
             "streamer": true,
@@ -25,7 +25,7 @@
         "client_id": "",
         "client_secret": "",
         "redirect_uri": "http://127.0.0.1:8888/callback",
-        "scope": "user-read-playback-state user-modify-playback-state",
+        "scope": "user-read-playback-state user-modify-playback-state user-read-currently-playing playlist-read-private",
         "default_playlist": "https://open.spotify.com/playlist/2sOt8rRBaecTxgc7LFidrm?si=80e4759b8eeb43b2"
     }
 }
