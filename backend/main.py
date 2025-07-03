@@ -223,7 +223,7 @@ async def update_obs_widget(room_id, result, message, track, push_message, push_
         obs_widget.message_data = {
             "message": message,
             "result": result,
-            "albumCover": track.get('album',{}).get('images',[{}])[0].get('url','') if track else '/images/Spotify.png'
+            "albumCover": track.get('album',{}).get('images',[{}])[0].get('url','') if track else './images/Spotify.png'
         }
     obs_widget.new_message = push_message
     obs_widget.new_playlist = push_playlist
