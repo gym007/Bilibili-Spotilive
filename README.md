@@ -20,7 +20,7 @@ v3.1.0 Pre Release
   - Spotify API
     - 前往[Spotify Developer](https://developer.spotify.com/dashboard) 如图页面创建Spotify 的API
     - Redirect Url填写 `http://127.0.0.1:8888/callback`,api和sdk不需要勾选
-    - 创建好后可以获得Spotify 的client ID和secret
+    - 创建好后可以获得Spotify 的client ID和secret 
 
 ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/spotify_api.png)
 
