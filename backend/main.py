@@ -26,6 +26,8 @@ def start_api():
 async def main():
     global bilibili_client, perm_handler, spotify_ctrl
     config = load_config()
+
+    room_id = config.get("room_id")  # 默认直播间ID
     
     set_danmaku_callback(handle_danmaku)
 
@@ -45,7 +47,7 @@ async def main():
 
     await asyncio.gather(
         bilibili_client.connect(),
-        player_loop(room_id=14005096)  # 连接到 Bilibili 直播间
+        player_loop(room_id=room_id)  # 连接到 Bilibili 直播间
     )
 
 

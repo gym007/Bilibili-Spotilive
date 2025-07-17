@@ -36,10 +36,10 @@ class SpotifyController:
         )
         self.sp = Spotify(auth_manager=self.sp_oauth, requests_session=session)
 
-    def _search_song(self, song_name):
+    def _search_song(self, song_name, limit):
         try:
             query_normalized = normalize_text(song_name).lower()
-            results = self.sp.search(q=song_name, type='track', limit=3)
+            results = self.sp.search(q=song_name, type='track', limit=limit)
             tracks = results.get('tracks', {}).get('items', [])
             if not tracks:
                 return None
@@ -71,8 +71,32 @@ class SpotifyController:
             print(f"[{self.room_id}]{timestamp()}[SPOT] [ERROR] 搜索歌曲出错: {e}")
             return None
 
-    async def search_song(self, song_name: str):
-        return await asyncio.to_thread(self._search_song, song_name)
+    async def search_song(self, song_name: str, limit: int = 3):
+        return await asyncio.to_thread(self._search_song, song_name, limit)
+    
+    def _api_search_song(self, song_name: str, limit):
+        """
+        使用 API 搜索歌曲，返回结果为字典格式。
+        """
+        try:
+            results = self.sp.search(q=song_name, type='track', limit=limit)
+            tracks = results.get('tracks', {}).get('items', [])
+            if not tracks:
+                return None
+            
+            track_list = []
+            for track in tracks:
+                track_list.append(track)
+            
+            print(f"[{self.room_id}]{timestamp()}[SPOT] [API搜索] 找到 {len(track_list)} 首歌曲")
+            return track_list
+        except Exception as e:
+            print(f"[{self.room_id}]{timestamp()}[SPOT] [ERROR] API 搜索歌曲出错: {e}")
+            return None
+        
+    async def api_search_song(self, song_name: str, limit: int = 3):
+        return await asyncio.to_thread(self._api_search_song, song_name, limit)
+        
 
     def _play_song(self, track):
         try:
