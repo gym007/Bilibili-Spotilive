@@ -1,0 +1,78 @@
+.queue-columns-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Space between columns */
+  justify-content: center; /* Center columns if there's extra space */
+  margin-top: 20px;
+}
+
+.queue-columns-container > .bordered-column {
+  flex: 1 1 300px; /* Allow columns to grow, shrink, and start with 300px basis */
+  max-width: 400px; /* Max width to prevent columns from becoming too wide */
+}
+
+.queue-columns-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: var(--text-color); /* Ensure h2 color adapts to theme */
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.queue-columns-container .list-group-item {
+  display: flex;
+  flex-direction: column; /* Stack content and buttons vertically */
+  align-items: flex-start; /* Align content to the start */
+  padding: 15px;
+}
+
+.queue-columns-container .list-group-item .song-info-container {
+  display: flex;
+  align-items: center;
+  width: 100%; /* Take full width */
+  margin-bottom: 10px; /* Space between info and buttons */
+}
+
+.queue-columns-container .list-group-item .song-info-container img {
+  flex-shrink: 0; /* Prevent image from shrinking */
+  margin-right: 15px;
+}
+
+.queue-columns-container .list-group-item .song-info-container > div {
+  flex-grow: 1; /* Allow text to take available space */
+  flex-shrink: 1; /* Allow text to shrink */
+  min-width: 0; /* Crucial for text to shrink and wrap naturally */
+  white-space: normal;
+  word-break: break-word; /* Allow words to break if necessary */
+}
+
+.queue-columns-container .list-group-item .button-group-container {
+  display: flex;
+  justify-content: flex-start; /* Align buttons to the left */
+  gap: 10px; /* Space between buttons */
+  margin-left: 65px; /* Align with text content (album cover width + margin) */
+  width: calc(100% - 65px); /* Ensure it takes remaining width */
+}
+
+.queue-columns-container .list-group-item button {
+  flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Custom Scrollbar (for Webkit browsers) */
+.scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background: #c0c0c0;
+  border-radius: 10px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0;
+}

@@ -1,0 +1,525 @@
+/* CSS Variables for Theming */
+:root {
+  --bg-color: #f0f2f5;
+  --content-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --text-color: #333333;
+  --secondary-text-color: #666666;
+  --border-color: #e0e0e0;
+  --card-bg: #ffffff;
+  --list-item-bg: #f8f8f8;
+  --shadow-light: rgba(0, 0, 0, 0.05);
+  --shadow-medium: rgba(0, 0, 0, 0.08);
+  --shadow-strong: rgba(0, 0, 0, 0.15);
+  --active-link-bg: #007aff;
+  --active-link-color: #ffffff;
+  --hover-bg: #e9ecef;
+  --hover-text: #007aff;
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --content-bg: #1e1e1e;
+  --sidebar-bg: #1e1e1e;
+  --text-color: #e0e0e0;
+  --secondary-text-color: #b0b0b0;
+  --border-color: #333333;
+  --card-bg: #2a2a2a;
+  --list-item-bg: #3a3a3a;
+  --shadow-light: rgba(0, 0, 0, 0.2);
+  --shadow-medium: rgba(0, 0, 0, 0.3);
+  --shadow-strong: rgba(0, 0, 0, 0.4);
+  --active-link-bg: #005bb5; /* Darker blue for dark mode active */
+  --active-link-color: #ffffff;
+  --hover-bg: #2a2a2a;
+  --hover-text: #5ac8fa; /* Lighter blue for dark mode hover */
+}
+
+/* General Body and App Layout */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background-color: var(--bg-color);
+}
+
+.content-container {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 20px;
+  background-color: var(--content-bg);
+  border-radius: 15px;
+  box-shadow: 0 4px 12px var(--shadow-light);
+  overflow-y: auto;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Sidebar Styling */
+.sidebar {
+  width: 200px;
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  background-color: var(--sidebar-bg);
+  padding: 25px 15px;
+  box-shadow: 2px 0 12px var(--shadow-medium);
+  display: flex;
+  flex-direction: column;
+  border-radius: 0 15px 15px 0;
+  position: relative;
+  z-index: 10;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.sidebar:hover {
+  box-shadow: 2px 0 18px var(--shadow-strong);
+}
+
+.sidebar-brand {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-color);
+  padding: 10px 0;
+  text-align: center;
+  margin-bottom: 15px;
+  transition: color 0.3s ease;
+}
+
+.sidebar hr {
+  border: none;
+  border-top: 1px solid var(--secondary-text-color);
+  margin: 15px 0;
+  transition: border-color 0.3s ease;
+}
+
+.nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  flex-grow: 1; /* Allow nav list to take available space */
+}
+
+.nav-list li {
+  margin-bottom: 8px;
+}
+
+.sidebar a {
+  display: flex;
+  align-items: center;
+  padding: 14px 18px;
+  color: var(--text-color);
+  text-decoration: none;
+  border-radius: 12px;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.1s ease;
+  font-weight: 500;
+}
+
+.sidebar a:hover {
+  background-color: var(--hover-bg);
+  color: var(--hover-text);
+  transform: translateY(-1px);
+}
+
+.sidebar a.active {
+  background-color: var(--active-link-bg);
+  color: var(--active-link-color);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.2); /* This shadow might need adjustment for dark mode */
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  margin-right: 12px;
+  /* Filter for SVG color in dark mode */
+  filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%); /* Default to black */
+  transition: filter 0.3s ease;
+}
+
+body.dark-mode .nav-icon {
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%); /* White in dark mode */
+}
+
+.sidebar a.active .nav-icon {
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%); /* White for active icon */
+}
+
+/* Theme Toggle */
+.theme-toggle-container {
+  margin-top: auto; /* Pushes it to the bottom */
+  padding-top: 15px;
+  transition: border-color 0.3s ease;
+}
+
+.theme-toggle-button {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* Center content within the button */
+  width: 100%;
+  padding: 12px 15px;
+  background-color: var(--card-bg); /* Use card background for button */
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 1px 4px var(--shadow-light);
+}
+
+.theme-toggle-button:hover {
+  background-color: var(--hover-bg);
+  color: var(--hover-text);
+  box-shadow: 0 2px 8px var(--shadow-medium);
+}
+
+.theme-icon {
+  width: 20px;
+  height: 20px;
+  margin-right: 10px;
+  filter: invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0%) contrast(100%); /* Default to black */
+  transition: filter 0.3s ease;
+}
+
+body.dark-mode .theme-icon {
+  filter: invert(100%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(100%) contrast(100%); /* White in dark mode */
+}
+
+h1, h2, h3, h4, h5, h6, p, strong, ul, li {
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+small {
+  color: var(--secondary-text-color);
+  transition: color 0.3s ease;
+}
+
+/* Column/Card Styling */
+.history-columns-container {
+  display: flex;
+  gap: 20px; /* Space between columns */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.history-columns-container .bordered-column {
+  flex: 1; /* Each column takes equal space */
+  min-width: 300px; /* Minimum width before wrapping */
+}
+
+.config-columns-container {
+  display: flex;
+  gap: 20px; /* Space between columns */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  margin-bottom: 20px; /* Add some space below the container */
+}
+
+.config-columns-container > .card, .config-columns-container > .card.mb-4 {
+  flex: 1; /* Each column takes equal space */
+  min-width: 300px; /* Minimum width before wrapping */
+  margin-bottom: 0; /* Remove individual card margin if within flex container */
+}
+
+.queue-columns-container {
+  display: flex;
+  gap: 20px; /* Space between columns */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.queue-columns-container .bordered-column {
+  flex: 1; /* Each column takes equal space */
+  min-width: 300px; /* Minimum width before wrapping */
+}
+
+.bordered-column,
+.card {
+  border: none;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  background-color: var(--card-bg);
+  box-shadow: 0 2px 8px var(--shadow-light);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card-header {
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-color);
+  font-weight: 600;
+  padding-bottom: 15px;
+  margin-bottom: 15px; /* Add margin to separate from body */
+  border-top-left-radius: 15px;
+  border-top-right-radius: 15px;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.card-body {
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+/* Form Specific Styling */
+label {
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+body.dark-mode label {
+  color: var(--secondary-text-color); /* Darker color for labels in dark mode */
+}
+
+.form-check-input {
+  background-color: var(--list-item-bg);
+  border-color: var(--border-color);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.form-check-input:checked {
+  background-color: #007aff; /* Keep primary color for checked state */
+  border-color: #007aff;
+}
+
+.form-check-label {
+  color: var(--text-color);
+  transition: color 0.3s ease;
+}
+
+/* Scrollable List Styling */
+.scrollable-list {
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 10px;
+  margin-top: 15px;
+}
+
+/* Custom Scrollbar (for Webkit browsers) */
+.scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar-track {
+  background: var(--bg-color);
+  border-radius: 10px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 10px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-text-color);
+}
+
+/* List Group Item Styling */
+.list-group-item {
+  margin-bottom: 10px;
+  border: none;
+  border-radius: 12px;
+  background-color: var(--list-item-bg);
+  padding: 15px;
+  box-shadow: 0 1px 4px var(--shadow-light);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+}
+
+.list-group-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
+}
+
+.list-group-item img {
+  border-radius: 8px;
+}
+
+.list-group-item strong,
+.list-group-item div {
+  color: var(--text-color);
+}
+
+.list-group-item small {
+  color: var(--secondary-text-color) !important;
+}
+
+/* Button Styling */
+.btn {
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-weight: 500;
+  border: none;
+  box-shadow: 0 2px 4px var(--shadow-light);
+  transition: all 0.2s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px var(--shadow-medium);
+}
+
+.btn-primary {
+  background-color: #007aff;
+  color: #ffffff;
+}
+
+.btn-primary:hover {
+  background-color: #005bb5;
+}
+
+.btn-success {
+  background-color: #34c759;
+  color: #ffffff;
+}
+
+.btn-success:hover {
+  background-color: #28a745;
+}
+
+.btn-info {
+  background-color: #5ac8fa;
+  color: #ffffff;
+}
+
+.btn-info:hover {
+  background-color: #2a9fd6;
+}
+
+.btn-secondary {
+  background-color: var(--border-color); /* Use border color for secondary button */
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-text-color);
+}
+
+.btn-danger {
+  background-color: #ff3b30;
+  color: #ffffff;
+}
+
+.btn-danger:hover {
+  background-color: #cc0000;
+}
+
+/* Input Group Styling */
+.input-group .form-control {
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 10px 15px;
+  box-shadow: inset 0 1px 3px var(--shadow-light);
+  background-color: var(--content-bg);
+  color: var(--text-color);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode .form-control {
+  background-color: var(--card-bg) !important;
+  color: #ffffff !important; /* Explicitly set text color to white in dark mode */
+  border-color: var(--border-color) !important;
+}
+
+body.dark-mode .form-control::placeholder { /* Standard */
+  color: #ffffff !important;
+  opacity: 1; /* Firefox default opacity is lower */
+}
+
+body.dark-mode .form-control::-webkit-input-placeholder { /* Chrome, Safari, Edge */
+  color: #ffffff !important;
+}
+
+body.dark-mode .form-control::-moz-placeholder { /* Firefox 19+ */
+  color: #ffffff !important;
+  opacity: 1;
+}
+
+body.dark-mode .form-control:-ms-input-placeholder { /* IE 10-11 */
+  color: #ffffff !important;
+}
+
+body.dark-mode .form-control::-ms-input-placeholder { /* Edge (older) */
+  color: #ffffff !important;
+}
+
+.input-group .form-control:focus {
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.25);
+}
+
+.input-group .btn {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.input-group .form-control:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.text-muted {
+  color: var(--secondary-text-color) !important;
+  transition: color 0.3s ease;
+}
+.footer {
+  margin-top: auto;
+  padding: 15px;
+  background-color: var(--sidebar-bg);
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  color: var(--secondary-text-color);
+  border-radius: 15px 15px 0 0;
+  box-shadow: 0 -2px 8px var(--shadow-light);
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* Toast Notification Styles */
+.toast-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 500;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateY(-50%) scale(0.9);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.toast-notification.success {
+  background-color: #4CAF50; /* Green for success */
+}
+
+.toast-notification.error {
+  background-color: #F44336; /* Red for error */
+}
+
+.toast-notification.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
