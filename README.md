@@ -1,4 +1,5 @@
 # New-Bilibili-Spotilive v1.0.0 Pre-Release
+[New-Bilibili-Spotilive v1.0.0 Pre-Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/r-v1.0.0)
 
 ## 点歌机后端
 - 在原有的基础上优化点歌逻辑
@@ -43,5 +44,5 @@
 
 ## 注意，此版本为测试版
 稳定版本：
-- (下载Bilibili-Spotilive v3.1.0 Stable Release)[https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Stable]
-- (教程)[https://github.com/jo4rchy/Bilibili-Spotilive/tree/legacy]
+- [下载Bilibili-Spotilive v3.1.0 Stable Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/v3.1.0-Stable)
+- [教程](https://github.com/jo4rchy/Bilibili-Spotilive/tree/legacy)
