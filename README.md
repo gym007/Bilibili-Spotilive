@@ -1,1 +1,32 @@
-开发中。。。。。
+#New-Bilibili-Spotilive v1.0.0 Pre-Release
+
+##点歌机后端
+- 在原有的基础上优化点歌逻辑
+- 开放API端点，允许前端调用并控制点歌机
+- 旧版本config无痛转移到新版本使用
+- 独立于前端运行
+
+##点歌机前端
+- 使用 React + Vite + Electron 构建前端图形界面
+- 现代化简洁UI，高效控制点歌机
+- 实时展示历史弹幕和历史点歌机请求，方便主播抓是谁在点整活歌
+- 添加快速搜索页面，一键添加到指定队列，或一键立即播放想听的歌曲
+- 快速删除队列中不合适的点歌
+- 浅色/深色模式可用
+
+## 如何使用点歌机
+- 下载 [New-Bilibili-Spotilive v1.0.0 Pre-Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/r-v1.0.0)
+- 解压缩后有两个 exe 文件
+
+后端使用说明：
+- 复制你原本的config文件到解压目录
+- 直接运行 `BiliBili-Spotilive-Backend-v1.0.0.exe` 即可开启弹幕点歌监听
+
+前端使用说明：
+- 运行 `BiliBili-Spotilive-Frontend-Setup-1.0.0.exe` 会自动安装前端，并在桌面创建快捷方式
+- 双击桌面的 `Bilibili Spotilive` 即可开启点歌机前端控制
+
+其他说明：
+- 后端独立运行，不开启前端也可以和老版本一样处理点歌请求
+- 前端运行前必须先运行后端，不然无法请求
+- OBS中nowplaying和队列的浏览器源不变，也可以下载 [Now_Playing](https://github.com/jo4rchy/Bilibili-Spotilive/tree/main/backend/static/nowplaying_widget) 和 [Queue(队列)](https://github.com/jo4rchy/Bilibili-Spotilive/tree/main/backend/static/queue_widget) 作为静态文件让OBS读取
