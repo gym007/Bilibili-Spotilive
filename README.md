@@ -14,6 +14,10 @@
 - 快速删除队列中不合适的点歌
 - 浅色/深色模式可用
 
+| 弹幕点歌历史 | 歌曲快速搜索 | 队列快速修改 |
+| - | - | - |
+| ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-0.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-1.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-2.png) |
+
 ## 如何使用点歌机
 - 下载 [New-Bilibili-Spotilive v1.0.0 Pre-Release](https://github.com/jo4rchy/Bilibili-Spotilive/releases/tag/r-v1.0.0)
 - 解压缩后有两个 exe 文件
@@ -25,10 +29,6 @@
 前端使用说明：
 - 运行 `BiliBili-Spotilive-Frontend-Setup-1.0.0.exe` 会自动安装前端，并在桌面创建快捷方式
 - 双击桌面的 `Bilibili Spotilive` 即可开启点歌机前端控制
-
-| 弹幕点歌历史 | 歌曲快速搜索 | 队列快速修改 |
-| - | - | - |
-| ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-0.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-1.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-2.png) |
 
 其他说明：
 - 后端独立运行，不开启前端也可以和老版本一样处理点歌请求
