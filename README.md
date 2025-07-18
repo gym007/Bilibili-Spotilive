@@ -1,12 +1,12 @@
-#New-Bilibili-Spotilive v1.0.0 Pre-Release
+# New-Bilibili-Spotilive v1.0.0 Pre-Release
 
-##点歌机后端
+## 点歌机后端
 - 在原有的基础上优化点歌逻辑
 - 开放API端点，允许前端调用并控制点歌机
 - 旧版本config无痛转移到新版本使用
 - 独立于前端运行
 
-##点歌机前端
+## 点歌机前端
 - 使用 React + Vite + Electron 构建前端图形界面
 - 现代化简洁UI，高效控制点歌机
 - 实时展示历史弹幕和历史点歌机请求，方便主播抓是谁在点整活歌
