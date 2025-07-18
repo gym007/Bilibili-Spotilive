@@ -6,6 +6,7 @@ Still in development, do not use in production.
 
 import asyncio
 import threading
+from bilibili_api.clients import AioHTTPClient,HTTPXClient
 from apis.api_server import set_api_spotify_controller, start_api_server
 from core.bilibili_client import BilibiliClient, set_danmaku_callback
 from core.spotify_controller import SpotifyController
@@ -13,7 +14,7 @@ from handler.permission_handler import PermissionHandler
 from handler.danmaku_handler import handle_danmaku
 from handler.request_handler import set_request_spotify_controller, set_permission_handler
 from core.player_loop import set_player_spotify_controller, player_loop
-from config.config import load_config
+from config.config import load_config, create_default_config
 
 bilibili_client = None
 perm_handler = None
@@ -25,7 +26,16 @@ def start_api():
 
 async def main():
     global bilibili_client, perm_handler, spotify_ctrl
+    print("欢迎使用 Bili-Spotilive！")
+    print("当前版本：1.0.0")
+    print("Github仓库地址：https://github.com/jo4rchy/Bilibili-Spotilive")
+
     config = load_config()
+    
+    if not config:
+        print("配置文件加载失败，正在创建默认配置...")
+        create_default_config()
+        config = load_config()
 
     room_id = config.get("room_id")  # 默认直播间ID
     
