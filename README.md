@@ -28,7 +28,7 @@
 
 | 弹幕点歌历史 | 歌曲快速搜索 | 队列快速修改 |
 | - | - | - |
-| | | |
+| ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-0.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-1.png) | ![](https://github.com/jo4rchy/Bilibili-Spotilive/blob/main/resources/frontend-2.png) |
 
 其他说明：
 - 后端独立运行，不开启前端也可以和老版本一样处理点歌请求
