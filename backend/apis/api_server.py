@@ -105,12 +105,8 @@ def get_queue(queue_type):
 
 @app.route('/api/queue/<queue_type>/add', methods=['POST'])
 def add_to_queue(queue_type):
-    qmap = {
-        'streamer': song_queue_streamer,
-        'guard':    song_queue_guard,
-        'normal':   song_queue,
-    }
-    queue = qmap.get(queue_type)
+    from core.player_loop import request_song_frontend
+    queue = queue_type
     if not queue:
         return jsonify({'error': 'invalid queue type'}), 400
 
@@ -118,41 +114,17 @@ def add_to_queue(queue_type):
     if not data or 'song' not in data:
         return jsonify({'error': 'missing song data'}), 400
 
-    song_data = data['song']
-    request_data = {
-        "user": {
-                    "uname": '主播',
-                    "uid": '主播',
-                    "face": '主播',
-                    "is_streamer": 1,
-                    "admin": 1,
-                    "medal_is_light": 1,
-                    "medal_level": 100,
-                    "privilege_type": 0,
-                },
-    }
-    asyncio.run(queue.add_song({"song": song_data, "request": request_data}))
-    return jsonify({'status': 'ok'})
-
-@app.route('/api/queue/<queue_type>/reorder', methods=['POST'])
-def reorder_queue(queue_type):
-    new_order = request.json.get('queue')
-    if queue_type == 'streamer':
-        asyncio.run(song_queue_streamer._queue.put(None))  # placeholder
-    # TODO: implement update in SongQueue
+    song = data['song']
+    asyncio.run(request_song_frontend(song, queue))
     return jsonify({'status': 'ok'})
 
 @app.route('/api/queue/<queue_type>/delete/<int:index>', methods=['DELETE'])
 def delete_queue_item(queue_type, index):
-    qmap = {
-        'streamer': song_queue_streamer,
-        'guard':    song_queue_guard,
-        'normal':   song_queue,
-    }
-    queue = qmap.get(queue_type)
+    from core.player_loop import delete_song_frontend
+    queue = queue_type
     if not queue:
         return jsonify({'error': 'invalid queue type'}), 400
-    removed = asyncio.run(queue.remove_at(index))  # assume remove_at method
+    removed = asyncio.run(delete_song_frontend(queue, index))  # assume remove_at method
     return jsonify({'removed': bool(removed)})
 
 @app.route('/api/spotify/search', methods=['GET'])
@@ -167,16 +139,14 @@ def spotify_search():
     return Response(json.dumps(track, ensure_ascii=False), status=200, content_type="application/json; charset=utf-8")
 
 @app.route('/api/spotify/playsong', methods=['POST'])
-def spotify_play_song():
+def frontend_play_song():
+    from core.player_loop import play_song_frontend
     data = request.json
     if not data or 'song' not in data:
         return jsonify({'error': 'missing song data'}), 400
 
     song = data['song']
-    if not spotify_controller:
-        return jsonify({'error': 'Spotify controller not ready'}), 500
-
-    asyncio.run(spotify_controller.play_song(song))
+    asyncio.run(play_song_frontend(song))
     return jsonify({'status': 'ok'})
 
 @app.route('/nowplayingjson')

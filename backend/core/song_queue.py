@@ -78,6 +78,23 @@ class SongQueue:
             return None
         queue_item = await self._queue.get()
         return queue_item
+    
+    async def reorder_queue(self, new_order: list) -> bool:
+        """
+        重新排序队列。
+        new_order 是一个索引列表，表示新的顺序。
+        返回 True 表示排序成功，False 表示失败（如索引无效）。
+        """
+        if not isinstance(new_order, list):
+            print(f"[{self.__class__.__name__}][{timestamp()}][队列] 重新排序失败，参数不是列表。")
+            return False
+
+        temp_queue = asyncio.Queue()
+        for item in new_order:
+            await temp_queue.put(item)
+        self._queue = temp_queue
+        print(f"[{self.__class__.__name__}][{timestamp()}][队列] 重新排序成功。")
+        return True
 
     def is_empty(self) -> bool:
         """
