@@ -10,7 +10,6 @@ import {
   getConfig,
   getQueue,
   deleteQueueItem,
-  reorderQueue,
   searchTrack,
   socket,
   addSongToQueue,
@@ -92,19 +91,7 @@ function App() {
     return () => clearInterval(interval); // Cleanup
   }, []);
 
-  // Listen for history updates
-  useEffect(() => {
-    const handleMessage = (data) => {
-      if (data.albumCover && !data.albumCover.includes('Spotify.png')) {
-        const requestWithTimestamp = { ...data, timestamp: Date.now() };
-        setRequests(prev => [requestWithTimestamp, ...prev]);
-      } else {
-        setDanmaku(prev => [data, ...prev]);
-      }
-    };
-    socket.on('message_update', handleMessage);
-    return () => socket.off('message_update', handleMessage);
-  }, []);
+  
 
   useEffect(() => {
     const handleDanmaku = (data) => {
@@ -114,21 +101,19 @@ function App() {
     return () => socket.off('danmaku_update', handleDanmaku);
   }, []);
 
-  // Listen for real-time queue updates from the backend
   useEffect(() => {
-    const handlePlaylistUpdate = (data) => {
-      console.log("Playlist update received via Socket.IO:", data);
-      // The backend sends the entire new playlist structure
-      // It might be nested under a 'playlist' or 'queues' key depending on backend implementation
-      const updatedQueues = data.queues || data; // Adapt to backend structure
-      setQueues({
-        streamer: updatedQueues.streamer || [],
-        guard: updatedQueues.guard || [],
-        normal: updatedQueues.normal || [],
-      });
+    const handleRequestUpdate = (data) => {
+      const formattedRequest = {
+        user: data.user,
+        message: data.message,
+        face: data.face,
+        timestamp: Date.now(),
+        song: data.song || null, // Add song data if available
+      };
+      setRequests(prev => [formattedRequest, ...prev]);
     };
-    socket.on('playlist_update', handlePlaylistUpdate);
-    return () => socket.off('playlist_update', handlePlaylistUpdate);
+    socket.on('request_update', handleRequestUpdate);
+    return () => socket.off('request_update', handleRequestUpdate);
   }, []);
 
 
@@ -175,39 +160,7 @@ function App() {
       });
   };
 
-  const handleDragEnd = (result) => {
-    const { source, destination } = result;
-    if (!destination) return;
-
-    const sourceQueueId = source.droppableId;
-    const destQueueId = destination.droppableId;
-
-    // Create a temporary new state to send to the backend
-    const sourceQueue = [...queues[sourceQueueId]];
-    const destQueue = sourceQueueId === destQueueId ? sourceQueue : [...queues[destQueueId]];
-    const [removed] = sourceQueue.splice(source.index, 1);
-    destQueue.splice(destination.index, 0, removed);
-
-    // Just send the command to the backend.
-    // The UI will update automatically via the 'playlist_update' socket event.
-    reorderQueue(destQueueId, destQueue).then(() => {
-      showToast(`已更新 ${queueTypeMap[destQueueId]}`, 'success');
-    }).catch(err => {
-      console.error("Error reordering queue:", err);
-      setError(prev => ({ ...prev, queue: '重排队列失败' }));
-      showToast(`重排队列失败: ${err.message}`, 'error');
-    });
-    // If moved between queues, update the source queue as well
-    if (sourceQueueId !== destQueueId) {
-      reorderQueue(sourceQueueId, sourceQueue).then(() => {
-        showToast(`已更新 ${queueTypeMap[sourceQueueId]}`, 'success');
-      }).catch(err => {
-        console.error("Error reordering source queue:", err);
-        setError(prev => ({ ...prev, queue: '重排队列失败' }));
-        showToast(`重排队列失败: ${err.message}`, 'error');
-      });
-    }
-  };
+  
 
   const handlePlayNow = (song, queueType = null, index = null) => {
     playSong(song)
@@ -244,7 +197,7 @@ function App() {
               <Route path="/" element={<ConfigPage config={config} error={error.config} />} />
               <Route path="/history" element={<HistoryPage danmaku={danmakuHistory} requests={requests} />} />
               <Route path="/search" element={<SearchPage results={searchResults} error={error.search} onSearch={handleSearch} onAddToQueue={handleAddToQueue} onPlayNow={handlePlayNow} />} />
-              <Route path="/queue" element={<QueuePage queues={queues} error={error.queue} onDelete={handleDelete} onDragEnd={handleDragEnd} onPlayNow={handlePlayNow} queueTypeMap={queueTypeMap} />} />
+              <Route path="/queue" element={<QueuePage queues={queues} error={error.queue} onDelete={handleDelete} onPlayNow={handlePlayNow} queueTypeMap={queueTypeMap} />} />
             </Routes>
           </main>
           {toast.message && (

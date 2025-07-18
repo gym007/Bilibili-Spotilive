@@ -8,7 +8,8 @@
 
 .queue-columns-container > .bordered-column {
   flex: 1 1 300px; /* Allow columns to grow, shrink, and start with 300px basis */
-  max-width: 400px; /* Max width to prevent columns from becoming too wide */
+  border-radius: 15px; /* Added for rounded corners */
+  overflow: hidden; /* Added to clip content within rounded corners */
 }
 
 .queue-columns-container h2 {

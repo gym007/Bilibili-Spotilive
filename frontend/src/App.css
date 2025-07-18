@@ -224,6 +224,7 @@ small {
   display: flex;
   gap: 20px; /* Space between columns */
   flex-wrap: wrap; /* Allow wrapping on smaller screens */
+  padding-bottom: 20px; /* Added padding to the bottom */
 }
 
 .history-columns-container .bordered-column {
@@ -235,7 +236,7 @@ small {
   display: flex;
   gap: 20px; /* Space between columns */
   flex-wrap: wrap; /* Allow wrapping on smaller screens */
-  margin-bottom: 20px; /* Add some space below the container */
+  margin-bottom: -5px; /* Add some space below the container */
 }
 
 .config-columns-container > .card, .config-columns-container > .card.mb-4 {
@@ -311,7 +312,7 @@ body.dark-mode label {
 
 /* Scrollable List Styling */
 .scrollable-list {
-  max-height: 500px;
+  max-height: 600px;
   overflow-y: auto;
   padding-right: 10px;
   margin-top: 15px;
@@ -337,13 +338,20 @@ body.dark-mode label {
 }
 
 /* List Group Item Styling */
+.list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px; /* Add gap between list items */
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
 .list-group-item {
-  margin-bottom: 10px;
   border: none;
-  border-radius: 12px;
   background-color: var(--list-item-bg);
   padding: 15px;
   box-shadow: 0 1px 4px var(--shadow-light);
+  border-radius: 12px; /* Added for rounded corners */
   transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
 }
 

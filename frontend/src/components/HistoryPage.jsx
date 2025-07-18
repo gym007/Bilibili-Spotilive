@@ -28,10 +28,10 @@ const HistoryPage = ({ danmaku, requests }) => {
             <ul className="list-group">
             {requests.map((item, index) => (
               <li key={index} className="list-group-item d-flex align-items-center">
-                <img src={item.albumCover} alt="album cover" width="50" height="50" className="me-3" referrerPolicy='no-referrer'/>
+                <img src={item.face} alt="" width="50" height="50" className="me-3" referrerPolicy='no-referrer'/>
                 <div>
                   <strong>{item.message}</strong>
-                  <div>{item.result}</div>
+                  <div>{item.user}</div>
                   <small className="text-muted">{new Date(item.timestamp).toLocaleString()}</small>
                 </div>
               </li>
